@@ -129,3 +129,39 @@ real masks/IDs and source-time alignment before advancing beyond the risk spike.
 Record and locally ingest one permitted 30-second fixed-camera mock-panel clip
 using the exact checklist in docs/EVALUATION.md, retaining original PTS and separate
 hand labels for tool/part/visibility intervals. No upload or paid call is required.
+
+## Operator verification — round 2 re-run
+
+The handoff reported "112 passed". An independent re-run on the operator machine does
+not reproduce that figure: 112 is the number of *collected* tests, not of passes.
+
+| Check | Measured result |
+|---|---|
+| Full suite | 90 passed, **22 errors** (tests/unit/test_workspace.py) |
+| Hermetic (`-m "not ffmpeg"`) | 89 passed, **16 errors** |
+| Mask conformance | 25 checks over 21 SYNTHETIC fixtures |
+| Risk gate | precision 10/11 (0.909), recall 10/13 (0.769), 1 false positive |
+| Risk gate, clean subset | precision 1.000, recall 1.000 |
+| Sampling comparison | 1 fps recall 0.000; 5 fps recall 0.769 |
+| Lint / format / validator | pass |
+| Spend | USD 0.00; live branch PENDING |
+
+### Interpretation, stated plainly
+
+- The three misses are **abstentions, not false witnesses**: occlusion yields
+  `unwitnessed-tail`, identity switch and timestamp gap yield `inferred`. No missed event was
+  ever reported as witnessed. The precision-critical design holds; the cost shows up as recall.
+- The single false positive comes from the adversarial case that supplies a *wrong* stable-camera
+  flag. Trusting gate inputs is a known limitation, recorded in docs/RISK_GATE.md.
+- 1 fps reaches zero recall with unchanged thresholds. 5 fps is the working candidate; the
+  1 fps assumption in earlier design notes is rejected by measurement.
+
+### Open defects carried into round 3
+
+- D-001: every test in `tests/unit/test_workspace.py` errors at collection time. Cause not yet
+  diagnosed; the suite is therefore **not green** and this record says so.
+- D-002: `python scripts/run_risk_gate.py` fails with `ModuleNotFoundError: No module named
+  'tests'`; the risk gate is only reachable through pytest.
+
+Round-2 work shipped inside the root commit `m0`; this record exists so that every claim above can
+be re-derived from the repository without reading a transcript.

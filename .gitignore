@@ -27,4 +27,3 @@ artifacts/*
 context/
 
 # Private local context: prompts, references, archived scaffold. Never published.
-context/
