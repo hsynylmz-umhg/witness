@@ -24,12 +24,16 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-ra --strict-markers"
+# D025: project-local temp and cache roots; the per-user pytest root under %TEMP% is not writable on the operator machine.
+addopts = "-ra --strict-markers --basetemp=.tmp/pytest"
+cache_dir = ".tmp/.pytest_cache"
 markers = ["ffmpeg: requires local ffmpeg or ffprobe executables"]
 
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+# Untracked third-party agent tooling, not product code.
+extend-exclude = [".claude", "demo-video"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]

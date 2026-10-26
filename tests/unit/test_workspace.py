@@ -50,3 +50,8 @@ def test_present_private_hash_mismatch_still_fails(tmp_path):
     (archive / "AGENTS.md.txt").write_text("SYNTHETIC_CHANGED_REFERENCE", encoding="utf-8")
     with pytest.raises(ValueError, match="bytes changed"):
         validator.validate_root(tmp_path)
+
+
+def test_pytest_base_temp_stays_inside_the_repository(tmp_path_factory):
+    # D025: reverting the --basetemp config sends tmp_path back to the unwritable %TEMP% root.
+    assert tmp_path_factory.getbasetemp().resolve().is_relative_to(ROOT.resolve())

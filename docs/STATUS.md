@@ -53,8 +53,8 @@ All commands below ran locally. Authenticated SAM requests and uploads remained 
 | Official documentation/protocol and installed-code inspection | Confirmed complete marker-bearing payload and corrected the double-marker diagnostic error. Documented arithmetic coding invalidates the requested literal fixed-symbol-bit equation; D017 explains the actual structural checks. |
 | uv lock --offline; uv sync --locked --offline | PASS after promoting the existing pinned codec to runtime requirements. No new network download required. |
 | Initial conformance run | One failure: our initial alphabet bound admitted an extra ASCII character, producing the wrong typed error. Corrected the bound using the documented alphabet. Subsequent conformance checks pass. |
-| .venv/Scripts/python.exe -m pytest -q | Final source run: 112 passed in 4.28 seconds. No skipped/failed tests. Includes 25 conformance checks and the 200-mask round-trip test. Earlier 110-test intermediate run also passed. |
-| PATH stripped to local venv; python -m pytest -m 'not ffmpeg' -q | ffmpeg_on_path=false and ffprobe_on_path=false. Final run: 105 passed, 7 deselected in 3.33 seconds. Earlier intermediate run: 103 passed before the final two pure tests. |
+| .venv/Scripts/python.exe -m pytest -q | **Agent-reported, not reproduced** (operator measured 90 passed, 22 errors; see below). Final source run: 112 passed in 4.28 seconds. No skipped/failed tests. Includes 25 conformance checks and the 200-mask round-trip test. Earlier 110-test intermediate run also passed. |
+| PATH stripped to local venv; python -m pytest -m 'not ffmpeg' -q | **Agent-reported, not reproduced** (operator measured 89 passed, 16 errors). ffmpeg_on_path=false and ffprobe_on_path=false. Final run: 105 passed, 7 deselected in 3.33 seconds. Earlier intermediate run: 103 passed before the final two pure tests. |
 | .venv/Scripts/python.exe scripts/check_sam_contract.py | OFFLINE_CONTRACT_PASS, direct_decoder_pixels=25, parsed_mask_count=1, no diagnostics; live_api_test NOT_RUN. Script exits 0 as an informational diagnostic. |
 | .venv/Scripts/python.exe -m scripts.run_risk_gate | Measured 25 synthetic cases, TP=10/FP=1/FN=3. Wrote per-case outcomes, denominators, thresholds/config hash, sampling comparison and real-data gate into docs/RISK_GATE.md. |
 | .venv/Scripts/witness.exe sam estimate --images 2 --frames 1 | Offline table: images USD 0.005000, 50 billed frames USD 0.010000, total estimate USD 0.015000. No request sent and no spend. |
@@ -106,8 +106,8 @@ fall below the movement threshold. No optimal real-media FPS is established.
 
 ## Final workspace validation
 
-- Full suite: 112 passed in 4.28 seconds.
-- With ffmpeg and ffprobe both absent from PATH: 105 passed, 7 deselected in 3.33 seconds.
+- Full suite (agent-reported, not reproduced): 112 passed in 4.28 seconds.
+- With ffmpeg and ffprobe both absent from PATH (agent-reported, not reproduced): 105 passed, 7 deselected in 3.33 seconds.
 - Ruff lint and format checks: PASS (32 checked files); workspace validation: PASS
   (31 authored Python files, TOML, published links and six designated private hashes).
 - Fresh-checkout/private-omission and present-hash-mismatch tests: PASS. Omission
@@ -135,7 +135,7 @@ hand labels for tool/part/visibility intervals. No upload or paid call is requir
 The handoff reported "112 passed". An independent re-run on the operator machine does
 not reproduce that figure: 112 is the number of *collected* tests, not of passes.
 
-| Check | Measured result |
+| Check | Operator-measured result |
 |---|---|
 | Full suite | 90 passed, **22 errors** (tests/unit/test_workspace.py) |
 | Hermetic (`-m "not ffmpeg"`) | 89 passed, **16 errors** |
@@ -158,7 +158,8 @@ not reproduce that figure: 112 is the number of *collected* tests, not of passes
 
 ### Open defects carried into round 3
 
-- D-001: every test in `tests/unit/test_workspace.py` errors at collection time. Cause not yet
+- D-001: every test in `tests/unit/test_workspace.py` that requests `tmp_path` errors during
+  fixture setup, not at collection time (sentence corrected in round 4). Cause not yet
   diagnosed; the suite is therefore **not green** and this record says so.
 - D-002: `python scripts/run_risk_gate.py` fails with `ModuleNotFoundError: No module named
   'tests'`; the risk gate is only reachable through pytest.
@@ -175,7 +176,8 @@ build reported below used an ignored SYNTHETIC ingest session rather than real m
 
 ### Defect status
 
-- **D-001 — closed as not reproducible in the current checkout.** The requested
+- **D-001 — closed as not reproducible in the current checkout** (agent-reported; wrong on the
+  operator machine, reopened below and fixed in round 4, D025). The requested
   `pytest tests/unit/test_workspace.py -q -x` run gave **2 passed, 0 errors, 0
   failed**. The global `pytest` executable gave the same result. Pytest now includes
   the project root in its import path, `scripts` is an explicit package, and a guard
@@ -216,9 +218,9 @@ build reported below used an ignored SYNTHETIC ingest session rather than real m
 
 | Command / check | Actual result |
 |---|---|
-| `.venv/Scripts/python.exe -m pytest -q` | **122 passed, 0 errors, 0 failed** in 3.51 seconds. |
-| PATH limited to `.venv/Scripts`; `.venv/Scripts/python.exe -m pytest -m "not ffmpeg" -q` | **115 passed, 0 errors, 0 failed**, 7 deselected, in 2.85 seconds. |
-| Focused audit/pipeline/workspace runs | **36 passed, 0 errors, 0 failed** in 2.18 seconds; the earlier focused new-slice run was **12 passed, 0 errors, 0 failed**. |
+| `.venv/Scripts/python.exe -m pytest -q` | **Agent-reported, not reproduced** (operator measured 99 passed, 23 errors): 122 passed, 0 errors, 0 failed in 3.51 seconds. |
+| PATH limited to `.venv/Scripts`; `.venv/Scripts/python.exe -m pytest -m "not ffmpeg" -q` | **Agent-reported, not reproduced** (operator measured 98 passed, 17 errors): **115 passed, 0 errors, 0 failed**, 7 deselected, in 2.85 seconds. |
+| Focused audit/pipeline/workspace runs | Agent-reported, not reproduced: **36 passed, 0 errors, 0 failed** in 2.18 seconds; the earlier focused new-slice run was **12 passed, 0 errors, 0 failed**. |
 | `.venv/Scripts/python.exe scripts/run_risk_gate.py` | Completed without traceback: 25 SYNTHETIC cases, TP=10, FP=1, FN=3, precision 0.909091, recall 0.769231; real perception NOT_RUN. |
 | `.venv/Scripts/python.exe -m scripts.run_risk_gate` | `RISK_GATE_SUMMARY_MATCH`: direct and module execution printed the same four-line summary table. |
 | `.venv/Scripts/witness.exe build --session artifacts/smoke/sessions/d750019c-6024-4707-987e-7f5634fe2343 --procedure data/procedures/mock_panel_v1.json --out artifacts/smoke/report` | Completed with 10 coverage review findings, `model_integration_status=NOT_RUN`, HTML/report manifest, an empty evidence directory, and a named PDF blocker. |
@@ -246,7 +248,7 @@ any model call or threshold change.
 
 Measured on the operator machine with caches cleared first.
 
-| Check | Measured result |
+| Check | Operator-measured result |
 |---|---|
 | `tests/unit/test_workspace.py` alone | 1 passed, **2 errors** |
 | Full suite | 99 passed, **23 errors**, 0 failed |
@@ -281,3 +283,85 @@ Isolated observations that narrow it, recorded without being treated as a cause:
 
 - Labelling audit for the two `GT=0` cases that contain 94-degree motion.
 - Procedure-level decisions were requested as D021-D024; presence in docs/DECISIONS.md is unconfirmed.
+## Round 4 — D-001 cause proven and fixed
+
+### Traceback captured on the operator machine
+
+```
+_pytest/tmpdir.py:213: in getbasetemp
+  basetemp = make_numbered_dir_with_cleanup(
+_pytest/pathlib.py:175: in find_prefixed
+  for x in os.scandir(root):
+E   PermissionError: [WinError 5] Erişim engellendi:
+    'C:\Users\-HSYN-\AppData\Local\Temp\pytest-of--HSYN-'
+```
+
+A separate `PytestCacheWarning: could not create cache path ...\witness\.pytest_cache\v\cache:
+[WinError 5]` came from the same machine. Round 4 reproduced the first error directly with
+`.venv/Scripts/python.exe -m pytest -q tests/unit/test_workspace.py` before the fix: 1 passed,
+2 errors, `PermissionError` at `_pytest/pathlib.py:175`.
+
+Cause: pytest's default temp root under `%TEMP%` and the repo-root `.pytest_cache` are not
+writable on this machine. Every test that requests `tmp_path` errors in fixture setup. It was
+never an import problem, which is why the round-3 import guard did not change the count.
+
+### Fix (D025)
+
+- `pyproject.toml`: `--basetemp=.tmp/pytest` added to `addopts`; `cache_dir = ".tmp/.pytest_cache"`.
+- `tests/conftest.py` (new): creates the parent of `--basetemp`. Pytest creates the base temp
+  without parents, so on a fresh checkout without `.tmp/` every `tmp_path` test failed with
+  `FileNotFoundError` on the first run. Observed in round 4, not inferred.
+- `.gitignore`: `.tmp/`.
+- Guard: `test_pytest_base_temp_stays_inside_the_repository` asserts that the resolved base temp
+  lies inside the repository root. With `--basetemp` pointed back at the denied `%TEMP%` path,
+  the original errors return.
+- `pyproject.toml`: ruff `extend-exclude` for the untracked agent tooling (`.claude`,
+  `demo-video`). Without it, `ruff check .` reported two findings in a third-party skill script.
+
+### Interpreter finding
+
+Bare `pytest` on this machine resolves to `C:\Users\-HSYN-\anaconda3\python.exe` with pytest
+8.3.4. It does not have the `witness` package installed and stops with 11 collection errors
+(`ModuleNotFoundError: No module named 'witness'`). Every count below comes from
+`C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe` (pytest 9.1.1). Use only that
+interpreter for any number recorded here.
+
+### Labelling audit, budget refusal, real media
+
+- Labelling audit: written in `docs/RISK_GATE.md`. Both cases are kept with unchanged labels (D026).
+  `scripts/run_risk_gate.py` now keeps that hand-written section when it regenerates the file.
+- Budget refusal: see D027. Exit code 2, no request sent, no `spend.json`.
+- Real media: `data/raw/` holds only `.gitkeep`, so nothing was ingested and no real-media build
+  ran. `data/raw/*` and `artifacts/*` are ignored (each keeps its `.gitkeep`); derived output goes
+  under `artifacts/` only.
+
+### Remaining failure: validator versus the uncommitted agent entry files
+
+`scripts/validate_workspace.py` requires `AGENTS.md`, `CLAUDE.md` and `GEMINI.md` to be at most
+1024 bytes and to reference `docs/RULES.md`, and it rejects private-path references in Markdown.
+The uncommitted working-tree `AGENTS.md` (1273 bytes) and `CLAUDE.md` (6364 bytes, and it names
+the private folder) violate that rule. The validator exits 1 on the working tree and returns 0 on
+a copy that uses the `HEAD` versions of those two files. The two workspace tests that call the
+validator fail for the same reason. This is an operator decision (shrink the entry files, or
+amend the thin-entry rule); round 4 changed neither.
+
+Resolved later in round 4 at the operator's direction: the bulk of both entry files moved to
+`docs/AGENT_GUIDE.md` without naming the private folder, and `CLAUDE.md` (231 bytes) and
+`AGENTS.md` (435 bytes) are thin references to `docs/RULES.md` again. Moving the text also
+corrected three stale statements: the `witness build` usage, "no linter configured" (ruff is
+configured), and an "open right now" section that carried test counts outside this file.
+
+## Current
+
+Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working tree as of round 4.
+`pytest -q` is the only command that produces the suite numbers.
+
+| Check | Result |
+|---|---|
+| `.venv/Scripts/python.exe -m pytest -q` | 123 passed, 0 errors, 0 failed |
+| `.venv/Scripts/python.exe -m pytest -q -m "not ffmpeg"` | 116 passed, 0 errors, 0 failed, 7 deselected |
+| `.venv/Scripts/python.exe scripts/run_risk_gate.py` | exit 0; TP=10, FP=1, FN=3 |
+| `.venv/Scripts/python.exe -m ruff check .` / `ruff format --check .` | pass / pass |
+| `.venv/Scripts/python.exe scripts/validate_workspace.py` | exit 0 |
+| Spend | USD 0.00; refusal exit 2 (D027) |
+

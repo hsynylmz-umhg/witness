@@ -1,6 +1,6 @@
 # Synthetic perception risk gate
 
-Measured UTC: 2026-10-26T21:04:08.400089Z
+Measured UTC: 2026-10-26T22:40:52.491806Z
 Pipeline 0.1.0; algorithm rotation_stop_v1; configuration SHA-256 c4b6961d4eff2e8191127680034b95cb6b2af87b15e065f64ddc815781d49870.
 
 ## Meaning and limits
@@ -102,3 +102,31 @@ Reproduce without ffmpeg, network or model credentials:
 ```powershell
 .venv/Scripts/python.exe -m scripts.run_risk_gate
 ```
+
+## Labelling audit
+
+Decision record for the operator, written in round 4. The numbers above are unchanged and
+were not re-run with different labels. Both answers were checked against
+`src/witness/synthetic/gen_masks.py` and by comparing generated tracks, not from the case names.
+
+1. **SYNTHETIC_camera_jitter_94_stop, GT=0: deliberate negative, correctly outside the recall
+   denominator.** The generator ignores the requested 94 degrees for this condition: the mask
+   swings by a 12-degree sinusoid, `camera_stable` is false on every sample, and the recorded
+   rotation is 0. No genuine rotation-and-stop exists in the data, so there is nothing to recall.
+   The case proves one thing: camera shake with an honest unstable-camera flag does not produce a
+   witnessed candidate (pinned by `test_bad_quality_never_silently_promotes_to_witnessed`). It does
+   **not** prove that a real 94-degree event survives jitter. That scenario is untested, and the
+   `94_stop` suffix in the name suggests otherwise.
+2. **SYNTHETIC_unflagged_camera_rotation_94_stop, GT=0, FP=1: deliberate adversarial test of gate
+   trust, not a mislabel.** Its sampled track is identical to `SYNTHETIC_clean_94_stop` in features,
+   visibility, identity, camera flag and timestamps; only the label differs. The story is "the
+   camera turned, the tool did not", with a wrong stable-camera flag supplied. No estimator that
+   consumes these inputs can separate the two, so the false positive is guaranteed by construction.
+   Relabelling it as a true positive would hide the limitation this case exists to show
+   (pinned by `test_unflagged_camera_rotation_is_a_measured_estimator_limitation`). The
+   all-conditions precision of 10/11 therefore includes one unavoidable input-trust error; the
+   clean-subset precision does not.
+
+Outcome: keep both cases and both labels (D026). In a later round, consider renaming the jitter
+case so it no longer carries `94_stop`, and adding a separate positive case with real rotation
+under flagged jitter, so that the recall denominator measures that scenario explicitly.

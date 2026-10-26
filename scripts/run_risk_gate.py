@@ -165,7 +165,14 @@ def main() -> int:
             "",
         ]
     )
-    (root / "docs/RISK_GATE.md").write_text("\n".join(lines), encoding="utf-8", newline="\n")
+    target = root / "docs/RISK_GATE.md"
+    text = "\n".join(lines)
+    # The hand-written labelling audit (D026) is a decision record, so it survives regeneration.
+    previous = target.read_text(encoding="utf-8") if target.exists() else ""
+    marker = "\n## Labelling audit"
+    if marker in previous:
+        text += previous[previous.index(marker) :]
+    target.write_text(text, encoding="utf-8", newline="\n")
     print("SYNTHETIC risk-gate summary")
     print("| Cases | TP | FP | FN | Precision | Recall | Real perception |")
     print("|---:|---:|---:|---:|---:|---:|---|")
