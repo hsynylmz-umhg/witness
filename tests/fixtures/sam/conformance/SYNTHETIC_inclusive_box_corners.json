@@ -1,0 +1,25 @@
+{
+  "data_origin": "SYNTHETIC",
+  "rule": "inclusive_box_corners",
+  "text": "<0f>0<|box;x1=315;y1=329;x2=319;y2=333;w=320;h=334|><|mask;x=0;y=0;data=5,5,!!!!!'y:0v[qU|>",
+  "object_ids": [
+    0
+  ],
+  "frames": [
+    0
+  ],
+  "shapes": [
+    [
+      5,
+      5
+    ]
+  ],
+  "boxes": [
+    [
+      315,
+      329,
+      319,
+      333
+    ]
+  ]
+}

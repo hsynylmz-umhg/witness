@@ -1,0 +1,9 @@
+{
+  "data_origin": "SYNTHETIC",
+  "rule": "bare_empty_frame_marker",
+  "text": "<0f>",
+  "object_ids": [],
+  "frames": [],
+  "shapes": [],
+  "error": "sam_record"
+}

@@ -1,0 +1,30 @@
+.env
+.env.*
+!.env.example
+.venv/
+.cache/
+CLAUDE.local.md
+*.response.json
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+artifacts/*
+!artifacts/.gitkeep
+*.log
+
+
+# Private local context…
+context/
+
+# Private local context: prompts, references, archived scaffold. Never published.
+context/

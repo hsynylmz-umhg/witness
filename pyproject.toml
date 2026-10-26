@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools==84.2.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "witness-ait"
+version = "0.1.0"
+description = "Evidence-linked observations for civil hardware integration"
+requires-python = ">=3.11"
+dependencies = ["numpy>=2,<3", "meta-sam-parser==0.1.0"]
+
+[project.scripts]
+witness = "witness.cli:main"
+
+[project.optional-dependencies]
+sam-verification = []
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.9,<1", "setuptools>=68"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = ["ffmpeg: requires local ffmpeg or ffprobe executables"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+

@@ -1,0 +1,9 @@
+{
+  "data_origin": "SYNTHETIC",
+  "rule": "box_outside_source",
+  "text": "<0f>0<|box;x1=315;y1=329;x2=320;y2=333;w=320;h=334|><|mask;x=0;y=0;data=5,5,!!!!!'y:0v[qU|>",
+  "object_ids": [],
+  "frames": [],
+  "shapes": [],
+  "error": "sam_record"
+}

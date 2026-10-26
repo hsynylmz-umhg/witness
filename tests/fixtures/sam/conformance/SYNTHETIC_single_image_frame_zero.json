@@ -1,0 +1,18 @@
+{
+  "data_origin": "SYNTHETIC",
+  "rule": "single_image_frame_zero",
+  "text": "<0f>0<|box;x1=10;y1=20;x2=14;y2=24;w=320;h=334|><|mask;x=0;y=0;data=5,5,!!!!!'y:0v[qU|>",
+  "object_ids": [
+    0
+  ],
+  "frames": [
+    0
+  ],
+  "shapes": [
+    [
+      5,
+      5
+    ]
+  ],
+  "media": "image"
+}

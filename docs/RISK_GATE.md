@@ -1,0 +1,102 @@
+# Synthetic perception risk gate
+
+Measured UTC: 2026-10-26T16:12:00.087189Z
+Pipeline 0.1.0; algorithm rotation_stop_v1; configuration SHA-256 c4b6961d4eff2e8191127680034b95cb6b2af87b15e065f64ddc815781d49870.
+
+## Meaning and limits
+
+All 25 cases are SYNTHETIC rasterized rectangles, with independent authored motion/stop
+labels and supplied camera/visibility/identity flags. Source rate is 25 fps. Repeats
+reuse a controlled generator; they are not independent real recordings. This validates
+the estimator and its gates, not real perception, SAM mask/ID quality, camera-stability
+estimation, 3D rotation, tightening or torque. No real video or API call was used.
+
+Candidate sampling: 5 fps. Ground truth is rotation >=45 degrees followed by a stop.
+Only witnessed visual candidates count as detections. Deliberately occluded, switched-ID
+and gapped positive cases remain in the recall denominator: withholding them is counted
+as a miss rather than hidden as success. The adversarial camera case supplies a wrong
+stable-camera flag; a false positive there exposes a limitation of trusting gate inputs.
+
+## Condition results
+
+| SYNTHETIC condition | Ground truth events | Detected (TP) | Missed (FN) | False positives | Outcomes |
+|---|---:|---:|---:|---:|---|
+| SYNTHETIC_clean_0_no_stop | 0 | 0 | 0 | 0 | none |
+| SYNTHETIC_clean_0_stop | 0 | 0 | 0 | 0 | none |
+| SYNTHETIC_clean_15_no_stop | 0 | 0 | 0 | 0 | none |
+| SYNTHETIC_clean_15_stop | 0 | 0 | 0 | 0 | none |
+| SYNTHETIC_clean_44_no_stop | 0 | 0 | 0 | 0 | inferred: 1 |
+| SYNTHETIC_clean_44_stop | 0 | 0 | 0 | 0 | none |
+| SYNTHETIC_clean_45_no_stop | 0 | 0 | 0 | 0 | unwitnessed-tail: 1 |
+| SYNTHETIC_clean_45_stop | 1 | 1 | 0 | 0 | witnessed: 1 |
+| SYNTHETIC_clean_60_no_stop | 0 | 0 | 0 | 0 | unwitnessed-tail: 1 |
+| SYNTHETIC_clean_60_stop | 1 | 1 | 0 | 0 | witnessed: 1 |
+| SYNTHETIC_clean_94_no_stop | 0 | 0 | 0 | 0 | unwitnessed-tail: 1 |
+| SYNTHETIC_clean_94_stop | 1 | 1 | 0 | 0 | witnessed: 1 |
+| SYNTHETIC_clean_120_no_stop | 0 | 0 | 0 | 0 | unwitnessed-tail: 1 |
+| SYNTHETIC_clean_120_stop | 1 | 1 | 0 | 0 | witnessed: 1 |
+| SYNTHETIC_clean_repeat_0 | 1 | 1 | 0 | 0 | witnessed: 1 |
+| SYNTHETIC_clean_repeat_1 | 1 | 1 | 0 | 0 | witnessed: 1 |
+| SYNTHETIC_clean_repeat_2 | 1 | 1 | 0 | 0 | witnessed: 1 |
+| SYNTHETIC_clean_repeat_3 | 1 | 1 | 0 | 0 | witnessed: 1 |
+| SYNTHETIC_clean_repeat_4 | 1 | 1 | 0 | 0 | witnessed: 1 |
+| SYNTHETIC_clean_repeat_5 | 1 | 1 | 0 | 0 | witnessed: 1 |
+| SYNTHETIC_occlusion_94_stop | 1 | 0 | 1 | 0 | unwitnessed-tail: 1 |
+| SYNTHETIC_identity_switch_94_stop | 1 | 0 | 1 | 0 | inferred: 1 |
+| SYNTHETIC_camera_jitter_94_stop | 0 | 0 | 0 | 0 | none |
+| SYNTHETIC_timestamp_gap_94_stop | 1 | 0 | 1 | 0 | inferred: 1 |
+| SYNTHETIC_unflagged_camera_rotation_94_stop | 0 | 0 | 0 | 1 | witnessed: 1 |
+
+All conditions: TP=10, FP=1, FN=3; precision 10/11 = 0.909091;
+recall 10/13 = 0.769231. n=25 cases, 13 ground-truth events.
+Clean subset: TP=10, FP=0, FN=0; precision 1.000000; recall 1.000000.
+Qualified witnessed outputs in the four explicitly gated bad-quality cases: 0.
+
+## Sampling comparison with unchanged thresholds
+
+| Candidate fps | TP | FP | FN | Precision | Recall |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 0 | 0 | 13 | undefined (0 denominator) | 0.000000 |
+| 5 | 10 | 1 | 3 | 0.909091 | 0.769231 |
+| 10 | 8 | 1 | 5 | 0.888889 | 0.615385 |
+
+At 1 fps the unchanged 0.3-second gap limit rejects consecutive samples; the
+one-second stop also cannot meet the three-sample rule. At 10 fps some 45-degree
+boundary cases lose small increments
+under the unchanged movement threshold. Thresholds remain sampling-rate dependent;
+these figures do not establish an optimal real-media rate. Unknown times are never
+interpolated. No thresholds were tuned after this evaluation to hide the misses.
+
+## Gate thresholds and status
+
+Offline clean gate: 10/10 true candidates (required >=8/10), clean precision 1.000000 (required >=0.90); explicitly invalid witnessed outputs 0 (required 0).
+Real perception gate: NOT_RUN. Before advancing, use a held-out permitted mock-panel
+clip set with at least 10 clean labeled events, require >=8/10 correct candidates,
+precision >=0.90 including predefined negative intervals, and zero witnessed promotion
+during annotated occlusion, camera movement, identity breaks or timestamp gaps. Report
+all numerators/denominators and review mask, part/ID and source-time correspondence.
+
+## Consumed detector configuration
+
+| Setting | Value |
+|---|---:|
+| min_rotation_deg | 45.0 |
+| movement_delta_deg | 2.0 |
+| stop_delta_deg | 1.5 |
+| stop_centroid_px | 3.0 |
+| min_stop_samples | 3 |
+| min_stop_seconds | 0.4 |
+| max_gap_seconds | 0.3 |
+| max_axis_step_deg | 60.0 |
+| max_event_seconds | 10.0 |
+| min_pixels | 12 |
+| min_elongation | 2.5 |
+| min_area_ratio | 0.4 |
+| area_history_samples | 5 |
+| numeric_tolerance_deg | 1e-09 |
+
+Reproduce without ffmpeg, network or model credentials:
+
+```powershell
+.venv/Scripts/python.exe -m scripts.run_risk_gate
+```

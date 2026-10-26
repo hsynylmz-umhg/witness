@@ -1,0 +1,15 @@
+{
+  "fixture_origin": "SYNTHETIC",
+  "description": "Invented ffprobe metadata, not a SAM response or captured video",
+  "streams": [{
+    "index": 0, "codec_name": "h264", "width": 64, "height": 48,
+    "time_base": "1/1000", "avg_frame_rate": "25/1", "r_frame_rate": "25/1",
+    "duration": "0.44"
+  }],
+  "frames": [
+    {"pts": 10000, "best_effort_timestamp": 10000},
+    {"pts": 10040, "best_effort_timestamp": 10040},
+    {"best_effort_timestamp": 10080},
+    {"pts": 10400, "best_effort_timestamp": 10400}
+  ]
+}

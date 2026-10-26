@@ -1,0 +1,20 @@
+{
+  "data_origin": "SYNTHETIC",
+  "rule": "lossless_threshold_vector",
+  "source": "https://github.com/meta-models/meta-sam/blob/main/conformance/cases/compact-api-image-lossless.json",
+  "provenance": "Published compact conformance vector; not a WITNESS real response.",
+  "text": "<0f>7<|box;x1=0;y1=0;x2=2;y2=1;w=3;h=2|><|mask;x=0;y=0;data=2,3,~!!!!.!0^zlTde]:)]`W|>\n",
+  "media": "image",
+  "object_ids": [
+    7
+  ],
+  "frames": [
+    0
+  ],
+  "shapes": [
+    [
+      2,
+      3
+    ]
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "data_origin": "SYNTHETIC",
+  "rule": "mask_smaller_than_source",
+  "text": "<0f>0<|box;x1=10;y1=20;x2=60;y2=56;w=320;h=334|><|mask;x=0;y=0;data=37,51,!!!!!(y:TD73s0|>",
+  "object_ids": [
+    0
+  ],
+  "frames": [
+    0
+  ],
+  "shapes": [
+    [
+      37,
+      51
+    ]
+  ],
+  "source_sizes": [
+    [
+      320,
+      334
+    ]
+  ]
+}
