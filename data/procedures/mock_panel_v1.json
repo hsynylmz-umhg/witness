@@ -1,0 +1,91 @@
+{
+  "_fixture_header": {
+    "authoring": "operator-authored",
+    "model_output": false,
+    "future_muse_spark_requirement": "A future model response must match the procedure_id, rev, and steps schema in this file."
+  },
+  "procedure_id": "mock_panel",
+  "rev": "v1",
+  "steps": [
+    {
+      "step_id": "mock-panel-001",
+      "order": 1,
+      "action": "rotate_tool",
+      "part_id": "M4_P01",
+      "tool": "hex driver",
+      "verbatim": "Rotate the hex driver on mock-panel fastener M4_P01."
+    },
+    {
+      "step_id": "mock-panel-002",
+      "order": 2,
+      "action": "rotate_tool",
+      "part_id": "M4_P02",
+      "tool": "hex driver",
+      "verbatim": "Rotate the hex driver on mock-panel fastener M4_P02."
+    },
+    {
+      "step_id": "mock-panel-003",
+      "order": 3,
+      "action": "rotate_tool",
+      "part_id": "M4_P03",
+      "tool": "hex driver",
+      "verbatim": "Rotate the hex driver on mock-panel fastener M4_P03."
+    },
+    {
+      "step_id": "mock-panel-004",
+      "order": 4,
+      "action": "rotate_tool",
+      "part_id": "M4_P04",
+      "tool": "hex driver",
+      "verbatim": "Rotate the hex driver on mock-panel fastener M4_P04."
+    },
+    {
+      "step_id": "mock-panel-005",
+      "order": 5,
+      "action": "rotate_tool",
+      "part_id": "M4_P05",
+      "tool": "hex driver",
+      "verbatim": "Rotate the hex driver on mock-panel fastener M4_P05."
+    },
+    {
+      "step_id": "mock-panel-006",
+      "order": 6,
+      "action": "rotate_tool",
+      "part_id": "M4_P06",
+      "tool": "hex driver",
+      "verbatim": "Rotate the hex driver on mock-panel fastener M4_P06."
+    },
+    {
+      "step_id": "mock-panel-007",
+      "order": 7,
+      "action": "rotate_tool",
+      "part_id": "M4_P07",
+      "tool": "hex driver",
+      "verbatim": "Rotate the hex driver on mock-panel fastener M4_P07."
+    },
+    {
+      "step_id": "mock-panel-008",
+      "order": 8,
+      "action": "rotate_tool",
+      "part_id": "M4_P08",
+      "tool": "hex driver",
+      "verbatim": "Rotate the hex driver on mock-panel fastener M4_P08."
+    },
+    {
+      "step_id": "mock-panel-009",
+      "order": 9,
+      "action": "rotate_tool",
+      "part_id": "M4_P09",
+      "tool": "hex driver",
+      "verbatim": "Rotate the hex driver on mock-panel fastener M4_P09."
+    },
+    {
+      "step_id": "mock-panel-010",
+      "order": 10,
+      "action": "rotate_tool",
+      "part_id": "M4_P10",
+      "tool": "hex driver",
+      "verbatim": "Rotate the hex driver on mock-panel fastener M4_P10."
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 """Fresh checkouts may omit all private operator material without weakening hashes."""
 
+import importlib
 import importlib.util
 import shutil
 from pathlib import Path
@@ -12,6 +13,19 @@ spec = importlib.util.spec_from_file_location(
 )
 validator = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(validator)
+
+
+def test_all_project_modules_and_scripts_import_without_errors():
+    source_root = ROOT / "src"
+    module_paths = sorted((source_root / "witness").rglob("*.py"))
+    script_paths = sorted((ROOT / "scripts").glob("*.py"))
+    for path in module_paths + script_paths:
+        relative = path.relative_to(source_root if path.is_relative_to(source_root) else ROOT)
+        parts = list(relative.with_suffix("").parts)
+        if parts[-1] == "__init__":
+            parts.pop()
+        module_name = ".".join(parts)
+        importlib.import_module(module_name)
 
 
 def test_fresh_checkout_without_private_material_passes_once(tmp_path, capsys):

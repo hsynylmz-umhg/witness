@@ -6,7 +6,7 @@ import math
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Mapping
 from uuid import uuid4
 
 from witness import __version__
@@ -58,6 +58,75 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def audit_record_hash(
+    session: Mapping[str, Any], events: list[dict[str, Any]], findings: list[dict[str, Any]]
+) -> str:
+    """Hash the canonical offline audit inputs before report bytes are created."""
+    record = {"events": events, "findings": findings, "session": dict(session)}
+    return hashlib.sha256(canonical_json(record)).hexdigest()
+
+
+def write_report_manifest(
+    output_dir: Path,
+    *,
+    session: Mapping[str, Any],
+    events: list[dict[str, Any]],
+    findings: list[dict[str, Any]],
+    report_html: bytes,
+    pdf_path: Path | None,
+    pdf_blocker_path: Path | None,
+    pdf_blocker: str | None,
+) -> dict[str, Any]:
+    """Write the offline report's record/report hash chain and external digest."""
+    record_hash = audit_record_hash(session, events, findings)
+    report_hash = hashlib.sha256(record_hash.encode("ascii") + report_html).hexdigest()
+    findings_content = canonical_json({"schema_version": "0.1", "findings": findings})
+    findings_path = output_dir / "findings.json"
+    findings_path.write_bytes(findings_content)
+    artifacts = [
+        {"path": "report.html", "sha256": hashlib.sha256(report_html).hexdigest()},
+        {"path": "findings.json", "sha256": hashlib.sha256(findings_content).hexdigest()},
+    ]
+    if pdf_path is not None:
+        artifacts.append(
+            {"path": pdf_path.name, "sha256": hashlib.sha256(pdf_path.read_bytes()).hexdigest()}
+        )
+    if pdf_blocker_path is not None:
+        artifacts.append(
+            {
+                "path": pdf_blocker_path.name,
+                "sha256": hashlib.sha256(pdf_blocker_path.read_bytes()).hexdigest(),
+            }
+        )
+    manifest = {
+        "schema_version": "0.2",
+        "manifest_kind": "offline_audit_report",
+        "record_hash": record_hash,
+        "report_hash": report_hash,
+        "report_hash_input": "sha256(record_hash ASCII bytes + report.html bytes)",
+        "report_path": "report.html",
+        "pdf": {
+            "path": pdf_path.name if pdf_path else None,
+            "blocker_path": pdf_blocker_path.name if pdf_blocker_path else None,
+            "blocker": pdf_blocker,
+        },
+        "artifacts": artifacts,
+        "canonicalization": "witness_json_v1",
+        "signature": None,
+        "trust_anchor": None,
+        "integrity_limitation": "Local hashes are not signatures or legal electronic signatures.",
+    }
+    content = canonical_json(manifest)
+    manifest_path = output_dir / "manifest.json"
+    manifest_path.write_bytes(content)
+    (output_dir / "manifest.sha256").write_text(
+        hashlib.sha256(content).hexdigest() + "  manifest.json\n",
+        encoding="ascii",
+        newline="\n",
+    )
+    return manifest
 
 
 def _fingerprint(path: Path) -> tuple[int, int, int, int]:

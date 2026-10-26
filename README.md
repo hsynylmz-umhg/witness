@@ -8,12 +8,13 @@ prove correct assembly, certify flight readiness or infer omission from missing
 evidence. Local hashes require trusted references and do not prevent rewriting a
 complete record.
 
-**Current delivery: offline perception contract and synthetic risk gate.** Local
-video ingest, PTS-based sampling, strict SAM mask/line-subset decoding and a pure
-rotation/stop candidate detector work offline. The synthetic experiment measures
-precision 10/11 and recall 10/13 across 25 cases. These are estimator results, not
-real perception quality. A paid single-image probe exists behind explicit gates;
-its live branch is PENDING. No real video/SAM integration has run.
+**Current delivery: offline perception contract, synthetic risk gate, and audit
+report slice.** Local video ingest, PTS-based sampling, strict SAM mask/line-subset
+decoding, a pure rotation/stop candidate detector, and a zero-model-call procedure
+audit/report work offline. The synthetic experiment measures precision 10/11 and
+recall 10/13 across 25 cases. These are estimator results, not real perception
+quality. A paid single-image probe exists behind explicit gates; its live branch is
+PENDING. No real video/SAM integration has run.
 
 ## Run locally
 
@@ -29,12 +30,20 @@ uv venv --python python .venv
 uv sync --locked
 .venv/Scripts/witness.exe --help
 .venv/Scripts/witness.exe ingest data/raw/mock-panel.mp4 --data-origin real --config config/defaults.toml
+.venv/Scripts/witness.exe build --session artifacts/sessions/<session-id> --procedure data/procedures/mock_panel_v1.json --out artifacts/report
 ```
 
 Skip venv creation if .venv exists. No keys or network are needed for ingest. The
 CLI does not load .env. Use --data-origin synthetic for generated footage. Candidate
 5 fps remains experimental; override with --candidate-fps only as an experiment.
 No frame extraction, transcoding or video upload is performed.
+
+`witness build` uses an optional local events.json sidecar. Without it, it produces
+high-severity coverage review gaps for the hand-authored procedure; those are not
+proof of a physical omission. It writes a self-contained report.html, evidence
+directory, findings.json and local hash-chain manifest. PDF is only written when
+optional local WeasyPrint is available; otherwise report.pdf.blocked.txt records the
+HTML fallback. No model call is made.
 
 A successful ingest writes session.json, timeline.json, legacy samples.json, new
 sampling.json, effective config.json and the initial manifest/digest under a fresh
@@ -88,6 +97,6 @@ Read [STATUS](docs/STATUS.md), [measured RISK_GATE](docs/RISK_GATE.md),
 [provenance](docs/NEW_WORK.md), [sources](docs/PRIOR_ART.md) and [demo plan](docs/DEMO.md).
 
 The next gate requires a permitted 30-second fixed-camera mock-panel recording,
-then real mask/ID and source-time validation. Procedure parsing, ordering audit,
-reports/PDF/UI, coverage planning, voice, generated cards, alternative providers,
-CI, deployment and publication were not implemented this round.
+then real mask/ID and source-time validation. Procedure extraction, coverage-agent
+planning, voice, generated cards, alternative providers, CI, deployment and
+publication remain unimplemented.

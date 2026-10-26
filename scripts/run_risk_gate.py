@@ -6,10 +6,10 @@ from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 
-from tests.fixtures.synthetic.gen_masks import generate_sequences, sampled_track
 from witness import __version__
 from witness.config import load_settings
 from witness.perception.events import detect_events
+from witness.synthetic.gen_masks import generate_sequences, sampled_track
 
 
 def measure(cases, fps, config):
@@ -129,6 +129,8 @@ def main() -> int:
             "under the unchanged movement threshold. Thresholds remain sampling-rate dependent;",
             "these figures do not establish an optimal real-media rate. Unknown times are never",
             "interpolated. No thresholds were tuned after this evaluation to hide the misses.",
+            "The three misses are abstentions: request a re-shoot through a future coverage agent,",
+            "not threshold loosening.",
             "",
             "## Gate thresholds and status",
             "",
@@ -164,9 +166,11 @@ def main() -> int:
         ]
     )
     (root / "docs/RISK_GATE.md").write_text("\n".join(lines), encoding="utf-8", newline="\n")
+    print("SYNTHETIC risk-gate summary")
+    print("| Cases | TP | FP | FN | Precision | Recall | Real perception |")
+    print("|---:|---:|---:|---:|---:|---:|---|")
     print(
-        f"SYNTHETIC: {len(cases)} cases; TP={tp}, FP={fp}, FN={fn}; "
-        f"precision={number(precision)}, recall={number(recall)}; real perception NOT_RUN."
+        f"| {len(cases)} | {tp} | {fp} | {fn} | {number(precision)} | {number(recall)} | NOT_RUN |"
     )
     return 0
 

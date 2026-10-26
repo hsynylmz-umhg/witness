@@ -2,8 +2,9 @@
 
 These are project contracts, not a claim of verified live integration. Ingest remains
 offline. A separate budget-gated single-image probe is implemented but PENDING;
-video transport, procedure extraction and audit findings are not implemented.
-Synthetic motion candidates are produced only by the offline estimator experiment.
+video transport and procedure extraction remain unverified. Synthetic motion
+candidates are produced only by the offline estimator experiment. Round 3 adds a
+zero-model-call procedure/audit/report vertical slice over persisted local artifacts.
 
 ## Implemented ingest artifacts
 
@@ -75,16 +76,64 @@ from optional source frame, PTS, media seconds and sample index, retaining quali
 flags. Its normalized mask would require verified full-source-resolution mapping;
 no such mapping is implemented. SamAdapter is a Protocol only, never a fake client.
 
+## Offline procedure, audit, and report contracts
+
+`procedure.json` is the response shape required from a future procedure-extraction
+call. It contains `procedure_id` (nonempty string), `rev` (nonempty string), and a
+nonempty `steps` array. Each step has exactly `step_id` (nonempty string), `order`
+(unique positive integer), `action`, `part_id`, `tool`, and `verbatim` (all nonempty
+strings). This first audit slice requires unique part IDs because it cannot yet
+disambiguate repeated instances. The checked-in mock-panel fixture has a local
+`_fixture_header` that labels it operator-authored and not model output; it is not a
+claim of provider output. A future provider response must use the documented
+procedure fields and must not inherit the fixture's authorship claim.
+
+`events.json` is an optional session-local input for this offline report. It is either
+an array or `{ "events": [...] }`. Every event has `event_id`, `part_id`, unique
+positive `observed_order`, and `status`; optional `evidence_id`, `evidence_path`, and
+`timestamp_s` remain local references. Only `witnessed` and `corroborated` events are
+qualified for coverage, ordering, and undocumented-part findings. An absent
+`events.json` is an empty event list; it never triggers a model call.
+
+`findings.json` contains `{ "schema_version": "0.1", "findings": [...] }`. Every
+finding has `finding_id`, `kind`, `severity`, `part_id`, `message`, and nullable
+`step_id`, `event_id`, and `evidence_id`. `coverage` emits a high-severity `skipped`
+review finding for each procedure part with no qualified event. In this tightly scoped
+offline audit, `skipped` means a review priority rather than proof of physical
+omission; it carries no evidence id and must not be presented as assembly correctness.
+`undocumented` is medium severity for a qualified part absent from the procedure.
+`ordering` selects one deterministic minimum review set outside a longest increasing
+subsequence. When several LIS solutions exist, the selected set is a review aid, not
+a claim that any individual event is certainly wrong.
+
+The offline report writes self-contained `report.html`, an `evidence/` directory,
+`findings.json`, `manifest.json`, and `manifest.sha256`. Evidence stills, when present,
+must be explicit session-local PNG, JPEG, or WebP files; all other findings render a
+clearly labelled non-evidence placeholder. The report's measurement statement
+explicitly excludes torque values, tightening quality, correct assembly, transferred
+force, and flight readiness. It makes no model call.
+
+The report `manifest.json` has `manifest_kind` `offline_audit_report`, a canonical
+`record_hash` equal to SHA-256 of canonical JSON `{session, events, findings}`, and a
+`report_hash` equal to SHA-256 of the ASCII `record_hash` followed by exact
+`report.html` bytes. It lists output artifact hashes and PDF status. Its external
+`manifest.sha256` hashes exact manifest bytes. This chain is local integrity evidence,
+not signing, a trust anchor, or a legal electronic signature. Existing ingest
+manifests stay unchanged.
+
+PDF generation uses optional local WeasyPrint only when already available. A missing
+or failed renderer writes `report.pdf.blocked.txt` and retains HTML as the named
+fallback. No PDF dependency is imported at module import time or required for tests.
+
 ## Future procedure/audit/evidence requirements
 
-A procedure step needs procedure/revision/step_id, sequence_index, action, optional
-part_id, required evidence, source page/quote and human_reviewed. Match by action,
-part, instance and time; repeated parts remain distinct. Ambiguous matches stay
-unresolved. Findings include matched_observation, missing_evidence,
-uncertain_evidence, order_discrepancy, undocumented_observation and
-nonobservable_requirement. Carry step indices with filtered event sequences.
-Equal order positions or multiple valid LIS solutions must not identify one
-arbitrary step as certainly wrong.
+A future procedure step needs source page/quote and human-review status in addition
+to the current contract. Match by action, part, instance and time; repeated parts
+remain distinct. Ambiguous matches stay unresolved. Future finding kinds include
+matched_observation, missing_evidence, uncertain_evidence, order_discrepancy,
+undocumented_observation and nonobservable_requirement. Carry step indices with
+filtered event sequences. Equal order positions or multiple valid LIS solutions must
+not identify one arbitrary step as certainly wrong.
 
 Future events require source/time ranges, track/part assignment method, quality,
 evidence references and algorithm version. observed means only a narrow visual

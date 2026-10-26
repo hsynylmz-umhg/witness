@@ -4,9 +4,9 @@ from dataclasses import replace
 
 import pytest
 
-from tests.fixtures.synthetic.gen_masks import generate_sequences, make_sequence, sampled_track
 from witness.config import load_settings
 from witness.perception.events import detect_events
+from witness.synthetic.gen_masks import generate_sequences, make_sequence, sampled_track
 
 
 @pytest.fixture(scope="module")

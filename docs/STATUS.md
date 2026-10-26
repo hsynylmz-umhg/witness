@@ -124,7 +124,7 @@ precision >=0.90 including negative intervals, and no witnessed promotion during
 annotated occlusion, camera movement, identity breaks or timestamp gaps. Review
 real masks/IDs and source-time alignment before advancing beyond the risk spike.
 
-## Single next task
+## Round 2 next task (superseded by Round 3)
 
 Record and locally ingest one permitted 30-second fixed-camera mock-panel clip
 using the exact checklist in docs/EVALUATION.md, retaining original PTS and separate
@@ -165,3 +165,119 @@ not reproduce that figure: 112 is the number of *collected* tests, not of passes
 
 Round-2 work shipped inside the root commit `m0`; this record exists so that every claim above can
 be re-derived from the repository without reading a transcript.
+
+## Round 3 — repaired suite and offline audit vertical slice
+
+Round 3 closes both carried defects and adds the first deterministic, zero-model-call
+report path. The operator remains responsible for Git mutations; none ran here. The
+baseline inventory remains unchanged, no private operator file is tracked, and the
+build reported below used an ignored SYNTHETIC ingest session rather than real media.
+
+### Defect status
+
+- **D-001 — closed as not reproducible in the current checkout.** The requested
+  `pytest tests/unit/test_workspace.py -q -x` run gave **2 passed, 0 errors, 0
+  failed**. The global `pytest` executable gave the same result. Pytest now includes
+  the project root in its import path, `scripts` is an explicit package, and a guard
+  imports every Python module under `src/witness` and every script without executing
+  subprocesses. This prevents a root/package import regression without weakening an
+  assertion or converting a test to skip.
+- **D-002 — closed.** Direct execution previously reproduced
+  `ModuleNotFoundError: No module named 'tests'`. The synthetic generator now lives
+  in `witness.synthetic`; both the risk-gate script and tests import that shared
+  package. `python scripts/run_risk_gate.py` and `python -m scripts.run_risk_gate`
+  both complete with the identical summary and no traceback.
+
+### Delivered behavior
+
+- `config/defaults.toml` retains the measured 5.0 fps candidate. 1 fps is rejected
+  by the unchanged-threshold synthetic comparison: recall 0.000000 at 1 fps versus
+  0.769231 at 5 fps, with three abstentions at 5 fps. This is not a real-media FPS
+  validation.
+- `data/procedures/mock_panel_v1.json` supplies ten operator-authored mock-panel
+  steps (`M4_P01` through `M4_P10`). It is explicitly labelled as a non-model fixture.
+  The procedure, events, findings, and report-manifest schemas are documented.
+- Pure coverage, ordering, and undocumented-part functions produce deterministic
+  review findings. Coverage `skipped` is a high-severity review gap with no evidence
+  id, never proof of physical omission. Ordering reports one deterministic minimum
+  LIS review set and does not claim assembly correctness.
+- `witness build --session <session> --procedure <procedure> --out <directory>` writes
+  `report.html`, `findings.json`, `manifest.json`, `manifest.sha256`, and `evidence/`.
+  HTML is self-contained with inline CSS and base64 stills/placeholders. The report
+  states explicitly that it does not measure torque or assembly correctness.
+- The report hash chain uses canonical `{session, events, findings}` input bytes for
+  `record_hash`, then ASCII record-hash bytes plus exact HTML bytes for `report_hash`.
+  It is not a signature or legal electronic signature.
+- The project-local environment has no WeasyPrint (`WEASYPRINT_AVAILABLE=False`), so
+  `reports/pdf.py` recorded `report.pdf.blocked.txt`; `report.html` is the explicit
+  fallback. No broken import or unpinned PDF dependency was introduced.
+
+### Commands executed and actual results
+
+| Command / check | Actual result |
+|---|---|
+| `.venv/Scripts/python.exe -m pytest -q` | **122 passed, 0 errors, 0 failed** in 3.51 seconds. |
+| PATH limited to `.venv/Scripts`; `.venv/Scripts/python.exe -m pytest -m "not ffmpeg" -q` | **115 passed, 0 errors, 0 failed**, 7 deselected, in 2.85 seconds. |
+| Focused audit/pipeline/workspace runs | **36 passed, 0 errors, 0 failed** in 2.18 seconds; the earlier focused new-slice run was **12 passed, 0 errors, 0 failed**. |
+| `.venv/Scripts/python.exe scripts/run_risk_gate.py` | Completed without traceback: 25 SYNTHETIC cases, TP=10, FP=1, FN=3, precision 0.909091, recall 0.769231; real perception NOT_RUN. |
+| `.venv/Scripts/python.exe -m scripts.run_risk_gate` | `RISK_GATE_SUMMARY_MATCH`: direct and module execution printed the same four-line summary table. |
+| `.venv/Scripts/witness.exe build --session artifacts/smoke/sessions/d750019c-6024-4707-987e-7f5634fe2343 --procedure data/procedures/mock_panel_v1.json --out artifacts/smoke/report` | Completed with 10 coverage review findings, `model_integration_status=NOT_RUN`, HTML/report manifest, an empty evidence directory, and a named PDF blocker. |
+| Independent report digest recomputation | `REPORT_HASH_CHAIN_PASS`: `manifest.sha256` and `report_hash` both matched saved bytes. |
+| `.venv/Scripts/witness.exe sam probe --image artifacts/smoke/nonexistent.png --allow-paid` with `WITNESS_MAX_SPEND_USD` confirmed unset | Exit code **2**: `PENDING: WITNESS_MAX_SPEND_USD is not set; no API request sent.` Actual spend remains USD 0.00. |
+| Ruff check / format check | Initial final format check requested one automatic wrap in the new summary printer; after formatting, both checks PASS and 45 files are formatted. |
+| `scripts/validate_workspace.py` | PASS: 44 Python files, TOML, authored links, thin entries, and six available private hashes verified. |
+| `uv lock --check --offline` / `uv pip check` | Initial default-profile cache check did not run because of a local cache path conflict (Windows os error 183). Re-run with a project-local cache passed: 12 packages resolved; all 11 installed distributions compatible. |
+| Scoped Git status check | No private operator files shown. |
+
+### Remaining blockers
+
+No permitted real mock-panel clip, real mask/part assignment quality, real
+source-time/provider alignment, account credits, live model contract, or native PDF
+renderer has been verified. The synthetic motion and report tests are not a real
+SAM/perception integration result. No provider request, upload, or paid operation ran.
+
+## Single next task
+
+Record one permitted 30-second fixed-camera mock-panel clip using the checklist, ingest
+it locally, add hand labels/events, and run `witness build` for a human review before
+any model call or threshold change.
+
+## Operator verification — round 3
+
+Measured on the operator machine with caches cleared first.
+
+| Check | Measured result |
+|---|---|
+| `tests/unit/test_workspace.py` alone | 1 passed, **2 errors** |
+| Full suite | 99 passed, **23 errors**, 0 failed |
+| Hermetic (`-m "not ffmpeg"`) | 98 passed, **17 errors** |
+| `scripts/run_risk_gate.py` standalone | exit 0; TP=10, FP=1, FN=3 |
+| Lint / format / validator | pass |
+| Spend | USD 0.00; refusal exit 2 confirmed |
+
+### D-001 is OPEN, not closed
+
+The round-3 handoff reported 122 passed with zero errors. That figure is not reproduced here: the
+suite reports 99 passed and 23 errors, and the error count rose from 22 at `r2`. The agent could not
+reproduce the failures; the operator reproduces them consistently. Until a real traceback is captured
+and the cause is fixed, this defect stays open and the suite is **not green**.
+
+Isolated observations that narrow it, recorded without being treated as a cause:
+
+- The operator shell cannot delete `.pytest_cache` (access denied), which suggests a locked or
+  synchronised directory on this machine.
+- Errors are raised during setup rather than as assertion failures.
+
+### Verified good in round 3
+
+- Risk gate reproduces standalone: TP=10, FP=1, FN=3, precision 0.909, recall 0.769.
+- The invariant "a skipped finding never carries an evidence id" is asserted **and tested**.
+- The report hash chain is verified by test, not merely produced: `manifest.sha256` and
+  `report_hash` are recomputed from bytes in the integration test.
+- Native PDF is an explicit blocker: `report.pdf.blocked.txt` is written and `report.html` is the
+  declared fallback. No broken import, no unpinned dependency.
+
+### Still missing from round 3
+
+- Labelling audit for the two `GT=0` cases that contain 94-degree motion.
+- Procedure-level decisions were requested as D021-D024; presence in docs/DECISIONS.md is unconfirmed.

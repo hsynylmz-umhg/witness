@@ -36,6 +36,9 @@ future ablation. Evaluate 1/5/10 fps against the original timeline; 5 fps is onl
 initial candidate, 1 fps may miss fast movement, and interpolation restores no lost
 visual evidence. Record negative findings as well as improvements.
 
+Real-media recall must be measured at 5 fps and, if it misses the 0.85 target, at the
+next candidate (10 fps) before any threshold tuning.
+
 ## Evidence available in this delivery
 
 Unit masks and ffprobe fixtures are explicitly SYNTHETIC. Integration tests create

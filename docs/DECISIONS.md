@@ -41,3 +41,12 @@ D017 supersedes D012's blocker inference; the historical failed diagnostic remai
 recorded as a corrected error. Source-video-to-provider timing and real perception
 quality remain unverified. D019's credit confirmation/config cap additionally retain
 the pre-existing spending rules; environment and command flags alone do not bypass them.
+
+## Round 3 — repair and offline audit decisions
+
+| ID | Decision | Rationale and actual evidence | Revisit condition |
+|---|---|---|---|
+| D021 | Remove the risk-gate script's dependency on the test package and guard importability | D-001 did not reproduce in this checkout: `no exception; pytest tests/unit/test_workspace.py -q -x: 2 passed, 0 errors, 0 failed`. Pytest now makes the project root importable and a guard imports every package module and script. D-002 reproduced as `ModuleNotFoundError: No module named 'tests'`; the synthetic generator moved to `witness.synthetic`, which both tests and the standalone script import. | If a clean-checkout run produces a new import traceback, record its exact environment and stderr. |
+| D022 | Reject 1 fps as this estimator's sampling candidate | Unchanged thresholds measured recall 0.000 at 1 fps and 0.769231 at 5 fps, with the same three abstentions at 5 fps. `candidate_sample_fps` is now 5.0; this remains a synthetic measurement, not a real-media optimum. | Measure labeled real-media recall at 5 fps, then 10 fps before threshold tuning if the 0.85 target is missed. |
+| D023 | Fix an operator-authored procedure contract before any model call | The ten-part mock-panel procedure lets deterministic coverage/order/undocumented review run without inventing procedure output. The fixture is explicitly not model output. Its narrowly named `skipped` finding is a high-severity human-review coverage gap, not proof of physical omission or assembly correctness. | Verified procedure provider contract and instance-aware matching for repeated parts. |
+| D024 | Keep PDF rendering optional and record an HTML fallback | The report uses optional local WeasyPrint only if available; absent or failed native rendering writes a named blocker and leaves self-contained HTML plus the hash chain. No PDF module is imported at startup and no unverified dependency was added. | A project-locked, reproducible offline PDF renderer is available and passes report rendering tests. |

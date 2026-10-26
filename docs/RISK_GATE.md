@@ -1,6 +1,6 @@
 # Synthetic perception risk gate
 
-Measured UTC: 2026-10-26T16:12:00.087189Z
+Measured UTC: 2026-10-26T21:04:08.400089Z
 Pipeline 0.1.0; algorithm rotation_stop_v1; configuration SHA-256 c4b6961d4eff2e8191127680034b95cb6b2af87b15e065f64ddc815781d49870.
 
 ## Meaning and limits
@@ -66,6 +66,8 @@ boundary cases lose small increments
 under the unchanged movement threshold. Thresholds remain sampling-rate dependent;
 these figures do not establish an optimal real-media rate. Unknown times are never
 interpolated. No thresholds were tuned after this evaluation to hide the misses.
+The three misses are abstentions: request a re-shoot through a future coverage agent,
+not threshold loosening.
 
 ## Gate thresholds and status
 

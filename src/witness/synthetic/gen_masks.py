@@ -6,13 +6,15 @@ import numpy as np
 
 from witness.config import Settings
 from witness.media.probe import FrameTime
-from witness.media.timeline import plan_samples
+from witness.media.sampling import plan_samples
 from witness.perception.events import TrackSample
 from witness.perception.features import mask_features
 
 
 @dataclass(frozen=True)
 class SyntheticSequence:
+    """A fully synthetic raster track and independently authored label."""
+
     name: str
     condition: str
     true_rotation_deg: float
@@ -40,7 +42,7 @@ def make_sequence(
     condition: str = "clean",
     name: str | None = None,
 ) -> SyntheticSequence:
-    # Generator dimensions/durations define test data, not detector thresholds.
+    """Generate one explicit synthetic motion/quality condition."""
     source_fps = 25
     prelude = np.zeros(10)
     motion = np.linspace(0, total_deg, 51)
@@ -64,7 +66,6 @@ def make_sequence(
             raster = rectangle_mask(float(12 * np.sin(index)))
             camera_stable = False
         elif condition == "unflagged_camera_rotation":
-            # Deliberately wrong camera metadata demonstrates a gate-input limitation.
             camera_stable = True
         if condition == "timestamp_gap" and index >= 35:
             timestamp += 1
@@ -86,7 +87,6 @@ def make_sequence(
                 data_origin="synthetic",
             )
         )
-    # The authored label rule is fixed by the experiment, independent of detector tuning.
     genuine_motion = total_deg >= 45 and has_stop
     if condition in {"camera_jitter", "unflagged_camera_rotation"}:
         genuine_motion = False
@@ -102,6 +102,7 @@ def make_sequence(
 
 
 def generate_sequences(settings: Settings) -> tuple[SyntheticSequence, ...]:
+    """Return the fixed synthetic risk-gate corpus."""
     cases = [
         make_sequence(rotation, stop, settings)
         for rotation in (0, 15, 44, 45, 60, 94, 120)
@@ -118,6 +119,7 @@ def generate_sequences(settings: Settings) -> tuple[SyntheticSequence, ...]:
 
 
 def sampled_track(case: SyntheticSequence, fps: float) -> tuple[TrackSample, ...]:
+    """Sample a synthetic track by source timestamps without interpolation."""
     frames = tuple(
         FrameTime(
             original_frame_index=row.original_frame_index,
