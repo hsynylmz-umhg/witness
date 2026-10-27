@@ -166,3 +166,43 @@ constant changed, and none will change after the measurement.
 | ID | Decision | Rationale and actual evidence | Revisit condition |
 |---|---|---|---|
 | D030 | Close the perception line: **the claim narrows to verifying an event log, and the perception gap is stated in the submission** | Rule v2 was run once on each clip, unchanged. Clean: 9 of 10 marks, onsets in step order, 1 `skipped` finding (BOX_09 at 1.91x, under RISE 2.0); the key expects 10 and none. Skipped: 10 marks where the key expects 9. BOX_06 is a false positive caused by the sheet sliding about 25 px under the pencil, while the masks stay fixed from the first frame. BOX_09/BOX_10 onsets came before their strokes. Findings were 3 `order_discrepancy` (BOX_03 correct for the 3/4 swap, BOX_06 and BOX_09 spurious) and no `skipped` box 6; the key expects skip(6) plus order(3/4). Both reports were built and both hash chains recompute. The texture measure does separate pencil from a flat hand on SYNTHETIC frames, and recovers most real marks with correct order on the clean clip. On this footage, though, it does not reliably separate a real mark from sheet motion and a pencil hovering above a box. So the submission must not claim perception of marks from pixels. The product claim is the deterministic, evidence-linked verification of an event log: coverage, ordering, evidence ids and a recomputable hash chain. The extractor is shown as a measured demonstration with its misses. Two clips from one scene support neither a positive nor a negative generalisation. | None for perception: round 7 was the hard stop. Re-registration per frame would be the first change if perception is ever reopened |
+
+## Round 8 — sheet registration, one change
+
+Written before either real clip was run through rule v3. The outcome follows as the D030
+amendment and D031.
+
+**D029 amendment (round 8): follow the sheet.** Round 7 measured the sheet sliding about +25 px
+horizontally across the skipped clip and about +3 / +8 px across the clean clip, while the rule-v2
+box masks stayed fixed in the first frame. In the skipped clip blank box 6 rose to 4.23x its
+baseline, and the last frame shows it blank, so that detection was geometry, not pencil. Clean
+BOX_09 ended at 1.91x, under RISE 2.0; whether drift caused that is a hypothesis this round
+tests, not a fact. Rule v3 (`panel_boxes_rule_v3`, docstring of
+`src/witness/perception/boxes.py`) estimates each sample's integer translation of the sheet by
+phase correlation of the Hann-tapered sheet crop against the first sample, searched strictly
+inside half the smallest box pitch, and moves every box mask and the paper mask by it. One new
+constant: the correlation peak must exceed **2.0x** the best value outside 2 px of it, or
+extraction raises with the frame index. Per-sample dx, dy, peak and peak ratio are stored in
+`box_marks.json`. The texture constants are unchanged: RISE 2.0, RELEASE 1.5, 3 s persistence,
+4 px window margins, 2 px frame border. On SYNTHETIC frames, a 60 px sheet slide makes fixed
+masks lose BOX_04, BOX_09 and BOX_10, and registration recovers all nine marks. A 25 px slide
+of the SYNTHETIC sheet does not reproduce the real 4.23x, because its 3 px outlines carry too
+little texture, so the test uses the larger slide. A frame-border test now pins P-029a, and a
+noise frame and a lens-cap frame each raise the registration error.
+
+**D030 amendment (round 8): the narrowing stands.** The round-7 decision above is unchanged.
+Outcome of the one registration change: rule v3 was run once on each clip, unchanged, and
+refused both. Clean: frame 1558 (t=52.033 s), correlation peak 0.1470 against a runner-up of
+0.0746 (1.97x, needed more than 2.0x). Skipped: frame 1733 (t=57.814 s), 0.1328 against
+0.0689 (1.93x). No events were produced, so the extractor matches the key on neither clip. A
+diagnostic replay of the same computation without raising (not a result) shows registration
+does follow the sheet when the peak is clear: skipped-clip shifts climb to +22 px confident
+and +29 px at the last frame, against round 7's independent +25 px. But 245 of 1205 clean and
+229 of 719 skipped samples fall at or below 2.0, mostly late in each clip as marks
+accumulate. The round-7 BOX_09 hypothesis stays untested. Both `_03` reports were built over an
+absent event log (10 `skipped` each) because the run script did not stop on the exit-2
+refusal; they are not a measurement. Details are in `docs/REAL_MEDIA.md`, "Round 8 measurement".
+
+| ID | Decision | Rationale and actual evidence | Revisit condition |
+|---|---|---|---|
+| D031 | **The perception line is closed and frozen.** The product claim is the one D030 states: deterministic, evidence-linked verification of an event log. Rule v3 stays in the code as the extractor, refusing loudly on these clips; no constant moves | Rule v2 (round 7) produced events but placed fixed masks on a drifting sheet. Rule v3 (round 8) follows the drift where the correlation is clear, and refuses where it is not, which on this footage is about a fifth of the samples. Lowering 2.0 would trade a loud refusal for masks that may sit wherever the pencil shadow is, which is the failure this round existed to remove. The latest real-clip events from any extractor remain the round-7 rule-v2 outputs (`artifacts/real_clean_02/`, `artifacts/real_skipped_02/`, produced by the code at tag `r7`), shown in the submission as a measured demonstration with their misses next to the key. Two clips from one scene, one operator and one sheet are a demonstration, not a generalisation claim, in either direction. | None. No round 9 and no further constant. The remaining time goes to the demo |

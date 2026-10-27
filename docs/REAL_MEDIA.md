@@ -305,3 +305,63 @@ clip was ingested into a fresh session and run once. Round-6 sessions and
 Corpus limitation (P-029b): two clips, one scene, one operator, one sheet that moves under the
 pencil. No further footage will be shot.
 
+
+## Round 8 measurement — sheet registration rule v3, run once
+
+Measured 2026-10-27. Everything above this heading is unchanged. Rule `panel_boxes_rule_v3`
+(D029 round-8 amendment) adds per-sample phase-correlation registration of the sheet with one
+new constant, a correlation peak of more than 2.0x the runner-up, or extraction raises. It was
+written into the module docstring and `docs/DECISIONS.md` before either clip was processed.
+The texture constants are unchanged (RISE 2.0, RELEASE 1.5, 3 s, 4 px, 2 px). Each clip was
+ingested into a fresh session and run once. Nothing was changed afterwards.
+
+| Step | `real_panel_v1_clean.mp4` | `real_panel_v1_skipped.mp4` |
+|---|---|---|
+| Session | `e722a44b-a238-4ee0-8e51-0a08a8a34e5a` | `d5f488ec-456b-4950-abe3-bed5eae95872` |
+| `witness boxes` | exit 2: "Sheet registration is ambiguous at t=52.033 s: correlation peak 0.1470, runner-up 0.0746, required ratio 2.0. Original frame index 1558." | exit 2: "Sheet registration is ambiguous at t=57.814 s: correlation peak 0.1328, runner-up 0.0689, required ratio 2.0. Original frame index 1733." |
+| `events.json`, `box_marks.json` | not written | not written |
+| Build | `artifacts/real_clean_03/`, written over an absent event log | `artifacts/real_skipped_03/`, written over an absent event log |
+| Hash chain | recomputes | recomputes |
+
+The run script built `_03` even though `boxes` had exited 2. Both reports therefore list 10
+`skipped` findings, one per step, and no evidence stills. That is what `build` does with an
+absent event log, and it says nothing about the footage. Those two reports are not a
+measurement and must not be shown as one.
+
+### Comparison with the key
+
+| Clip | Expected | Marks found | Box ids | Order finding | Match |
+|---|---|---|---|---|---|
+| clean | 10 marks, no findings | none: extraction refused at frame 1558 (peak ratio 1.97) | none | none | no |
+| skipped | 9 marks, box 6 absent; 3/4 out of order | none: extraction refused at frame 1733 (peak ratio 1.93) | none | none | no |
+
+### Drift profile — diagnostic replay, not a result
+
+To show whether registration was doing real work, the same registration computation was
+replayed over every sample of both sessions without raising. Nothing in the rule changed, and
+no events were produced. "Confident" means a peak ratio above 2.0.
+
+| Clip | Samples | Confident | At or below 2.0 | Confident dy range | Confident dx range | Last confident dy, dx | Min confident peak | Median peak ratio |
+|---|---|---|---|---|---|---|---|---|
+| clean | 1205 | 960 | 245 (min ratio 1.001) | -2 to +10 px | -12 to +4 px | +3, +2 px at 199.2 s | 0.0917 | 8.33 |
+| skipped | 719 | 490 | 229 (min ratio 1.006) | -2 to +4 px | 0 to +22 px | +2, +22 px at 125.2 s | 0.0571 | 4.85 |
+
+Search range: +/-46 px on both clips (under half the smallest box pitch).
+
+- **Registration did follow the sheet in the skipped clip.** Confident shifts climb from 0 to
+  +22 px horizontally, and the replayed last frame reads +29 px. That agrees with the round-7
+  measurement of about +25 px, which was made by an independent method (outline profiles).
+- **Weak samples are not rare, and they grow as the clip goes on.** Weak samples per 30 s bin:
+  clean `[0, 14, 23, 0, 0, 0, 53, 150, 5]`, skipped `[0, 1, 37, 74, 117]`. Both refused frames
+  show the sheet in full view with the pencil tip in box 3 and its long shadow across the
+  sheet; no hand covers the sheet. One explanation fits: the reference is the unmarked first
+  frame, and each hatched box and the moving pencil shadow pull the sheet further from it. That
+  is a hypothesis, not a measurement.
+- **The BOX_09 hypothesis from round 7 stays untested.** No events were produced after the
+  fix, so registration cannot be credited or blamed for the 1.91x miss.
+- **Fail-loud did its job.** In the weak samples the tracker might be following the pencil or
+  its shadow rather than the sheet. The run stopped at the first such frame instead of
+  reporting events from masks placed there.
+
+Corpus limitation, unchanged: two clips, one scene, one operator. Round 8 was the last
+perception round, and no constant is changed after this run.

@@ -4,8 +4,18 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
-from witness.perception.boxes import HEIGHT, WIDTH, events_from_onsets, mark_onsets, measure
+from witness.errors import WitnessError
+from witness.perception import boxes
+from witness.perception.boxes import (
+    HEIGHT,
+    WIDTH,
+    events_from_onsets,
+    locate_boxes,
+    mark_onsets,
+    measure,
+)
 
 SHEET = json.loads(
     (Path(__file__).parents[2] / "data/procedures/panel_boxes_v1.json").read_text(encoding="utf-8")
@@ -27,14 +37,19 @@ def _part_box(number: int) -> tuple[int, int, int, int]:
     return _box((number - 1) // 2, 1 if number % 2 else 0)
 
 
-def _frames(mark_times: dict[int, float], flat: list[tuple[int, float, float]] = ()):
-    """Light diagonal hatching marks (about 4% darker); flat darkenings stand in for a hand."""
+def _frames(mark_times: dict[int, float], flat=(), slide=(DURATION_S, 0, 0)):
+    """Light diagonal hatching marks (about 4% darker); flat darkenings stand in for a hand.
+
+    slide = (from_s, dy, dx): the whole sheet moves by (dy, dx) px from from_s on.
+    """
     for index in range(DURATION_S * FPS):
         t = index / FPS
+        dy, dx = slide[1:] if t >= slide[0] else (0, 0)
         frame = np.full((HEIGHT, WIDTH), 60.0)
-        frame[150:520, 100:860] = 210
+        frame[150 + dy : 520 + dy, 100 + dx : 860 + dx] = 210
         for number in range(1, 11):
             y0, y1, x0, x1 = _part_box(number)
+            y0, y1, x0, x1 = y0 + dy, y1 + dy, x0 + dx, x1 + dx
             frame[y0 - 3 : y0, x0 - 3 : x1 + 3] = 30
             frame[y1 : y1 + 3, x0 - 3 : x1 + 3] = 30
             frame[y0:y1, x0 - 3 : x0] = 30
@@ -50,8 +65,8 @@ def _frames(mark_times: dict[int, float], flat: list[tuple[int, float, float]] =
         yield t, np.clip(frame + noise, 0, 255).astype(np.uint8)
 
 
-def _events(mark_times, flat=()):
-    layout, times, ratios = measure(_frames(mark_times, flat), SHEET)
+def _events(mark_times, flat=(), slide=(DURATION_S, 0, 0)):
+    layout, times, ratios, _ = measure(_frames(mark_times, flat, slide), SHEET)
     return events_from_onsets(layout, times, mark_onsets(times, ratios))
 
 
@@ -75,3 +90,39 @@ def test_SYNTHETIC_texture_rejects_a_flat_hand_and_accepts_light_hatching():
     # the flat darkening resting on box 3 until the end of the clip.
     events = _events({1: 2.0}, flat=[(5, 5.0, 8.0), (3, 24.0, DURATION_S)])
     assert [event["part_id"] for event in events] == ["BOX_01"]
+
+
+def test_SYNTHETIC_masks_follow_a_sheet_that_slides_mid_clip():
+    # Fixed first-frame masks lose BOX_04, BOX_09 and BOX_10 here: after the slide they cover
+    # outline, gap and the neighbouring box instead of the box they were found on.
+    marks = {number: 2.0 * number for number in range(1, 11) if number != 6}
+    layout, times, ratios, registration = measure(_frames(marks, slide=(11.0, 6, -60)), SHEET)
+    events = events_from_onsets(layout, times, mark_onsets(times, ratios))
+    assert [event["part_id"] for event in events] == [f"BOX_{n:02d}" for n in marks]
+    assert {tuple(row) for row in registration[:, :2].astype(int)} == {(0, 0), (6, -60)}
+
+
+def test_SYNTHETIC_region_touching_the_frame_edge_is_not_a_box(monkeypatch):
+    # P-029a: a bright sliver cut off by the top edge, inside the sheet's bounds.
+    frame = dict(_frames({})).get(0.0)
+    frame[:150, 100:860] = 210
+    frame[0:40, 400:403] = frame[0:40, 467:470] = frame[37:40, 400:470] = 30
+    assert len(locate_boxes(frame, SHEET).part_ids) == 10
+    monkeypatch.setattr(boxes, "BORDER_PX", 0)
+    with pytest.raises(WitnessError, match="found 11"):
+        locate_boxes(frame, SHEET)
+
+
+@pytest.mark.parametrize("covered", ["noise", "lens cap"])
+def test_SYNTHETIC_unreadable_sheet_translation_raises(covered):
+    def frames():
+        for t, frame in _frames({}):
+            if t == 10.0:
+                rng = np.random.default_rng(0)
+                frame = rng.integers(0, 256, frame.shape, dtype=np.uint8)
+                frame = frame if covered == "noise" else np.full_like(frame, 12)
+            yield t, frame
+
+    with pytest.raises(boxes.AmbiguousRegistration, match=r"t=10\.000 s") as error:
+        measure(frames(), SHEET)
+    assert error.value.time_s == 10.0

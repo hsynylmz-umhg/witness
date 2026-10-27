@@ -1,10 +1,13 @@
 # Demo assets
 
 Raw material for the three-minute video, not the video itself. Every path below exists on the
-operator machine as of round 7, unless it is marked `MISSING`. `artifacts/` and `data/raw/` are
+operator machine as of round 8, unless it is marked `MISSING`. `artifacts/` and `data/raw/` are
 git-ignored, so those files are local only and are never committed. The claim the video may make
-is set by D030: verification of an event log, with the perception extractor shown as a measured
-demonstration, misses included.
+is set by D030 and D031: verification of an event log, with the perception extractor shown as a
+measured demonstration, misses included. The `_02` assets come from rule v2 (tag `r7`).
+`artifacts/real_clean_03/` and `artifacts/real_skipped_03/` are not demo material: they were
+built over an absent event log after rule v3 refused both clips, and their 10 `skipped` findings
+say nothing about the footage.
 
 | Asset | Path | What it shows |
 |---|---|---|
@@ -19,3 +22,4 @@ demonstration, misses included.
 | Risk-gate table | `docs/RISK_GATE.md` | 25 SYNTHETIC cases, TP/FP/FN and the labelling audit |
 | Real versus key, side by side | `docs/REAL_MEDIA.md` ("Round 7 measurement") | Expected, found, onset times and why each miss happened |
 | Round comparison | `artifacts/real_clean_01/report.html` | The round-6 brightness rule on the same clip, for a before/after shot |
+| A loud refusal | `docs/REAL_MEDIA.md` ("Round 8 measurement") | Rule v3 stopping at frame 1558 / 1733 instead of placing masks on an ambiguous registration, with the drift profile |

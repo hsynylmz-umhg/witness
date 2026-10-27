@@ -1,11 +1,39 @@
-"""Deterministic pencil-mark events for the printed ten-box panel (D029, rule v2, round 7).
+"""Deterministic pencil-mark events for the printed ten-box panel (D029, rule v3, round 8).
 
-Why v2 measures texture: rule v1 (round 6) measured mean luminance, which cannot separate a
-pencil from a hand. Both make a box darker. Pencil hatching adds high-frequency structure (dark
-strokes, light gaps), while a hand adds a flat, smooth darkening. Gradient energy sees the
-difference; mean luminance does not.
+Why v3 registers the sheet: round 7 measured the sheet sliding about +25 px across the skipped
+clip (about +3 / +8 px in the clean clip). Rule v2 fixed the box masks in the first frame, so
+late in the clip a mask covers printed outline instead of blank interior, and printed outline
+reads as texture. BOX_06 in the skipped clip (4.23x baseline, blank in the last frame) is
+explained by that: the detection was an artefact of geometry. BOX_09 in the clean clip, missed
+at 1.91x, may also be a geometry effect, since a partly covered outline can bias the ratio in
+either direction, but that is a hypothesis until a measurement after this fix supports it.
 
-The rule below was fixed before either real clip was run through it, and is not changed after.
+Rule v3 changes geometry only; every texture constant below is unchanged from v2.
+
+- Reference: the first sample cropped to the sheet's bounding box, mean-removed and tapered by a
+  2-D Hann window.
+- Each sample: the same crop is phase-correlated with the reference (numpy FFT, whitened cross
+  spectrum). The translation is the integer peak of the correlation surface. Translation only;
+  no rotation or scale is estimated.
+- Search range: |dx| and |dy| stay strictly below half the smallest box pitch measured in the
+  first frame. A larger shift cannot be told apart from the neighbouring box by grid geometry,
+  so it is not searched (derived from the layout, not a tuned value).
+- Fail loudly: the peak must exceed REGISTRATION_PEAK_RATIO = 2.0 times the highest value of the
+  searched surface outside REGISTRATION_EXCLUSION_PX = 2 px of the peak (the spread of a
+  sub-pixel peak). Otherwise extraction raises with the frame index. "At least twice the
+  runner-up" is the judgement call: a smaller margin means a second translation explains the
+  frame almost as well.
+- Every box mask and the paper mask move by the estimated shift before the texture ratio is
+  measured. Per-sample dx, dy, peak and peak ratio go to box_marks.json as diagnostics; drift
+  is not a finding.
+
+Rule v2 (round 7), still in force for texture. Why v2 measures texture: rule v1 (round 6)
+measured mean luminance, which cannot separate a pencil from a hand. Both make a box darker.
+Pencil hatching adds high-frequency structure (dark strokes, light gaps), while a hand adds a
+flat, smooth darkening. Gradient energy sees the difference; mean luminance does not.
+
+Rules v2 and v3 were each fixed before either real clip was run through them, and were not
+changed after.
 
 - Frames are decoded once by ffmpeg as 8-bit gray at 960x540; only planned samples are used.
 - Sheet: Otsu threshold on the first sample; the largest 4-connected bright component is the
@@ -42,8 +70,8 @@ Measured limitation: there is no homography. Boxes are located as printed region
 their masks follow perspective; only grid assignment uses order (rows by y, then x). The
 residual perspective error is reported as the largest distance between a box centre,
 normalised to the union of box bounds, and its ideal grid centre.
-Known failure: a textured object (a patterned sleeve) resting on a box for PERSIST_S at the
-very end of a clip.
+Known failures: a textured object (a patterned sleeve) resting on a box for PERSIST_S at the
+very end of a clip; a sheet that rotates rather than slides, which translation does not follow.
 """
 
 import json
@@ -75,7 +103,9 @@ SMOOTH_S = 1.0
 RISE = 2.0
 RELEASE = 1.5
 PERSIST_S = 3.0
-RULE = "panel_boxes_rule_v2"
+REGISTRATION_PEAK_RATIO = 2.0
+REGISTRATION_EXCLUSION_PX = 2
+RULE = "panel_boxes_rule_v3"
 
 
 @dataclass(frozen=True)
@@ -84,6 +114,17 @@ class Layout:
     part_ids: tuple[str, ...]
     masks: tuple[np.ndarray, ...]
     residual: float
+    window: tuple[slice, slice]
+    reference: np.ndarray
+    max_shift: int
+
+
+class AmbiguousRegistration(WitnessError):
+    """The sheet's translation could not be read unambiguously from one sampled frame."""
+
+    def __init__(self, time_s: float, message: str) -> None:
+        super().__init__(message)
+        self.time_s = time_s
 
 
 def _otsu(gray: np.ndarray) -> int:
@@ -202,22 +243,74 @@ def locate_boxes(frame: np.ndarray, sheet_spec: Mapping[str, Any]) -> Layout:
     paper = _erode(sheet, PAPER_EROSION_PX)
     if not paper.any():
         raise WitnessError("Sheet margin vanishes after edge erosion.")
-    return Layout(paper, tuple(part_ids), tuple(masks), residual)
+    pitch = min(
+        [b[1] - a[1] for boxes in grid for a, b in zip(boxes, boxes[1:])]
+        + [b[0] - a[0] for upper, lower in zip(grid, grid[1:]) for a, b in zip(upper, lower)]
+    )
+    window = (
+        slice(int(sheet_y.min()), int(sheet_y.max()) + 1),
+        slice(int(sheet_x.min()), int(sheet_x.max()) + 1),
+    )
+    reference = np.conj(_spectrum(frame, window))
+    return Layout(
+        paper, tuple(part_ids), tuple(masks), residual, window, reference, int((pitch - 1) // 2)
+    )
+
+
+def _spectrum(frame: np.ndarray, window: tuple[slice, slice]) -> np.ndarray:
+    crop = frame[window].astype(float)
+    taper = np.outer(np.hanning(crop.shape[0]), np.hanning(crop.shape[1]))
+    return np.fft.fft2((crop - crop.mean()) * taper)
+
+
+def register(frame: np.ndarray, layout: Layout, time_s: float) -> tuple[int, int, float, float]:
+    """Return the sheet's (dy, dx) shift from the first frame, its peak and peak ratio, or raise."""
+    cross = _spectrum(frame, layout.window) * layout.reference
+    surface = np.real(np.fft.ifft2(cross / np.maximum(np.abs(cross), 1e-12)))
+    offsets = np.arange(-layout.max_shift, layout.max_shift + 1)
+    searched = surface[np.ix_(offsets, offsets)]
+    row, column = np.unravel_index(np.argmax(searched), searched.shape)
+    peak = float(searched[row, column])
+    near = (np.abs(offsets - offsets[row]) <= REGISTRATION_EXCLUSION_PX)[:, None] & (
+        np.abs(offsets - offsets[column]) <= REGISTRATION_EXCLUSION_PX
+    )[None, :]
+    runner_up = float(searched[~near].max())
+    if not peak > REGISTRATION_PEAK_RATIO * max(runner_up, 0.0):
+        raise AmbiguousRegistration(
+            time_s,
+            f"Sheet registration is ambiguous at t={time_s:.3f} s: correlation peak {peak:.4f}, "
+            f"runner-up {runner_up:.4f}, required ratio {REGISTRATION_PEAK_RATIO}.",
+        )
+    ratio = peak / runner_up if runner_up > 0 else float("inf")
+    return int(offsets[row]), int(offsets[column]), peak, ratio
+
+
+def _shift(mask: np.ndarray, dy: int, dx: int) -> np.ndarray:
+    moved = np.zeros_like(mask)
+    height, width = mask.shape
+    moved[max(dy, 0) : height + min(dy, 0), max(dx, 0) : width + min(dx, 0)] = mask[
+        max(-dy, 0) : height + min(-dy, 0), max(-dx, 0) : width + min(-dx, 0)
+    ]
+    return moved
 
 
 def _gradient_energy(dx: np.ndarray, dy: np.ndarray, mask: np.ndarray) -> float:
     pairs = np.concatenate([dx[mask[:, 1:] & mask[:, :-1]], dy[mask[1:] & mask[:-1]]])
+    if not pairs.size:
+        raise WitnessError("A registered window left the frame.")
     return float(pairs.mean())
 
 
-def box_ratios(frame: np.ndarray, layout: Layout) -> np.ndarray:
-    """Return each box's gradient energy relative to the paper margin in the same frame."""
+def box_ratios(frame: np.ndarray, layout: Layout, shift: tuple[int, int] = (0, 0)) -> np.ndarray:
+    """Return each box's gradient energy relative to the paper margin, masks moved by shift."""
     signed = frame.astype(np.int16)
     dx, dy = np.abs(np.diff(signed, axis=1)), np.abs(np.diff(signed, axis=0))
-    paper = _gradient_energy(dx, dy, layout.paper)
+    paper = _gradient_energy(dx, dy, _shift(layout.paper, *shift))
     if paper <= 0:
         raise WitnessError("Paper margin shows no measurable texture in a sampled frame.")
-    return np.array([_gradient_energy(dx, dy, mask) for mask in layout.masks]) / paper
+    return (
+        np.array([_gradient_energy(dx, dy, _shift(mask, *shift)) for mask in layout.masks]) / paper
+    )
 
 
 def mark_onsets(times: np.ndarray, ratios: np.ndarray) -> list[int | None]:
@@ -242,17 +335,22 @@ def mark_onsets(times: np.ndarray, ratios: np.ndarray) -> list[int | None]:
 
 def measure(
     frames: Iterable[tuple[float, np.ndarray]], sheet_spec: Mapping[str, Any]
-) -> tuple[Layout, np.ndarray, np.ndarray]:
-    """Locate boxes in the first frame, then measure every frame against that layout."""
-    layout, times, ratios = None, [], []
+) -> tuple[Layout, np.ndarray, np.ndarray, np.ndarray]:
+    """Locate boxes in the first frame, then measure every frame with the sheet registered.
+
+    Returns the layout, sample times, box ratios and per-sample (dy, dx, peak, peak ratio).
+    """
+    layout, times, ratios, registration = None, [], [], []
     for time_s, frame in frames:
         if layout is None:
             layout = locate_boxes(frame, sheet_spec)
+        dy, dx, peak, ratio = register(frame, layout, time_s)
         times.append(time_s)
-        ratios.append(box_ratios(frame, layout))
+        ratios.append(box_ratios(frame, layout, (dy, dx)))
+        registration.append((dy, dx, peak, ratio))
     if layout is None:
         raise WitnessError("No sampled frames were decoded.")
-    return layout, np.array(times), np.array(ratios)
+    return layout, np.array(times), np.array(ratios), np.array(registration)
 
 
 def events_from_onsets(
@@ -339,7 +437,12 @@ def extract_box_events(session_dir: Path, video: Path, procedure_path: Path) -> 
         if sample["media_time_s"] is not None
     }
     by_time = {time_s: index for index, time_s in wanted.items()}
-    layout, times, ratios = measure(_decode(video, wanted, len(timeline["frames"])), sheet_spec)
+    try:
+        layout, times, ratios, registration = measure(
+            _decode(video, wanted, len(timeline["frames"])), sheet_spec
+        )
+    except AmbiguousRegistration as error:
+        raise WitnessError(f"{error} Original frame index {by_time[error.time_s]}.") from error
     onsets = mark_onsets(times, ratios)
     events = events_from_onsets(layout, times, onsets)
     still_frames = []
@@ -355,10 +458,17 @@ def extract_box_events(session_dir: Path, video: Path, procedure_path: Path) -> 
             "rise": RISE, "release": RELEASE, "persist_s": PERSIST_S, "baseline_s": BASELINE_S,
             "smooth_s": SMOOTH_S, "mask_erosion_px": MASK_EROSION_PX,
             "paper_erosion_px": PAPER_EROSION_PX, "border_px": BORDER_PX, "width": WIDTH,
-            "height": HEIGHT,
+            "height": HEIGHT, "registration_peak_ratio": REGISTRATION_PEAK_RATIO,
+            "registration_exclusion_px": REGISTRATION_EXCLUSION_PX,
+            "registration_max_shift_px": layout.max_shift,
         },
         "perspective_residual_uv": layout.residual,
         "samples": len(times),
+        "registration": [
+            {"frame_index": by_time[float(t)], "dx": int(dx), "dy": int(dy), "peak": peak,
+             "peak_ratio": ratio if np.isfinite(ratio) else None}
+            for t, (dy, dx, peak, ratio) in zip(times, registration)
+        ],
         "boxes": [],
     }  # fmt: skip
     for box, part_id in enumerate(layout.part_ids):
@@ -382,5 +492,11 @@ def extract_box_events(session_dir: Path, video: Path, procedure_path: Path) -> 
         "marked": [event["part_id"] for event in events],
         "perspective_residual_uv": round(layout.residual, 4),
         "samples": len(times),
+        "drift_px": {
+            "dx": [int(registration[:, 1].min()), int(registration[:, 1].max())],
+            "dy": [int(registration[:, 0].min()), int(registration[:, 0].max())],
+            "min_peak": round(float(registration[:, 2].min()), 4),
+            "min_peak_ratio": round(float(registration[:, 3].min()), 3),
+        },
         "model_integration_status": "NOT_RUN",
     }

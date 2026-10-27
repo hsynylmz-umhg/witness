@@ -379,25 +379,48 @@ configured), and an "open right now" section that carried test counts outside th
 - D030: the claim narrows to verifying an event log; the perception gap is stated.
   `docs/DEMO_ASSETS.md` lists the raw material for the demo.
 
+## Round 8 — sheet registration rule v3, run once, perception frozen
+
+- `src/witness/perception/boxes.py` (rule v3): each sample is phase-correlated with the first
+  sample's sheet crop, and every mask moves by the integer shift. It raises with the frame index
+  when the peak is not more than 2.0x the runner-up. Texture constants unchanged.
+- `tests/unit/test_boxes.py`: three new SYNTHETIC tests. A 60 px sheet slide (fails with
+  registration disabled: BOX_04, BOX_09 and BOX_10 are lost), the P-029a frame-border rule
+  (fails with the border set to 0), and noise and lens-cap frames that must raise. The hand test
+  still yields BOX_03 under the saved round-6 brightness extractor.
+- Real media, run once: `witness boxes` exited 2 on both clips (clean frame 1558, peak ratio
+  1.97; skipped frame 1733, 1.93). The `_03` builds were made over an absent event log and are
+  not a measurement (`docs/REAL_MEDIA.md`, D030 amendment). D031 freezes perception.
+- Round 7 real-media result, rule `panel_boxes_rule_v2`, superseded here as the current
+  extractor but still the latest real-clip events (`artifacts/real_clean_02/`,
+  `artifacts/real_skipped_02/`):
+
+| Clip | Marks found (expected) | Findings (expected) | Hash chain |
+|---|---|---|---|
+| `real_panel_v1_clean.mp4` | 9, onsets in step order (10) | 1 skipped BOX_09 (none) | recomputes |
+| `real_panel_v1_skipped.mp4` | 10, BOX_06 false positive (9, box 6 absent) | 3 order: BOX_03, BOX_06, BOX_09 (skip 6 + order 3/4) | recomputes |
+
 ## Current
 
-Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working tree as of round 7.
+Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working tree as of round 8.
 `pytest -q` is the only command that produces the suite numbers.
 
 | Check | Result |
 |---|---|
-| `.venv/Scripts/python.exe -m pytest -q` | 126 passed, 0 errors, 0 failed |
-| `.venv/Scripts/python.exe -m pytest -q -m "not ffmpeg"` | 119 passed, 0 errors, 0 failed, 7 deselected |
+| `.venv/Scripts/python.exe -m pytest -q` | 130 passed, 0 errors, 0 failed |
+| `.venv/Scripts/python.exe -m pytest -q -m "not ffmpeg"` | 123 passed, 0 errors, 0 failed, 7 deselected |
 | `.venv/Scripts/python.exe scripts/run_risk_gate.py` | exit 0; TP=10, FP=1, FN=3 |
 | `.venv/Scripts/python.exe -m ruff check .` / `ruff format --check .` | pass / pass |
 | `.venv/Scripts/python.exe scripts/validate_workspace.py` | exit 0 |
 | Spend | USD 0.00; refusal exit 2 (D027) |
 
 Real media, kept separate from the synthetic figures (never summed or averaged with them).
-Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`; extractor rule
-`panel_boxes_rule_v2` (D029 amendment, D030); details in `docs/REAL_MEDIA.md`.
+Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`; extractor rule `panel_boxes_rule_v3` (D029 round-8 amendment, D030
+amendment, D031); details in `docs/REAL_MEDIA.md`.
 
 | Clip | Marks found (expected) | Findings (expected) | Hash chain |
 |---|---|---|---|
-| `real_panel_v1_clean.mp4` | 9, onsets in step order (10) | 1 skipped BOX_09 (none) | recomputes |
-| `real_panel_v1_skipped.mp4` | 10, BOX_06 false positive (9, box 6 absent) | 3 order: BOX_03, BOX_06, BOX_09 (skip 6 + order 3/4) | recomputes |
+| `real_panel_v1_clean.mp4` | none: registration refused at frame 1558, ratio 1.97 (10) | not measured; `_03` built over an absent event log (none) | recomputes |
+| `real_panel_v1_skipped.mp4` | none: registration refused at frame 1733, ratio 1.93 (9, box 6 absent) | not measured; `_03` built over an absent event log (skip 6 + order 3/4) | recomputes |
+
+Perception is frozen (D031). Next task: the demo, under the claim D030 and D031 state.
