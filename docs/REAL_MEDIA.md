@@ -114,3 +114,136 @@ reason to hide the section.
 
 
 
+## Measured files
+
+Measured 2026-10-27 in round 5 with ffprobe 8.0.1 (`-count_frames`, all packets read). The
+existing sections above are unchanged. These are facts about the files, not about the scene.
+
+| Property | `real_panel_v1_clean.mp4` | `real_panel_v1_skipped.mp4` |
+|---|---|---|
+| Size | 519,270,925 bytes | 309,769,001 bytes |
+| Container | mov,mp4,m4a,3gp,3g2,mj2 | mov,mp4,m4a,3gp,3g2,mj2 |
+| Video codec / pixel format | h264 / yuv420p | h264 / yuv420p |
+| Width x height | 1920 x 1080 | 1920 x 1080 |
+| `r_frame_rate` / `avg_frame_rate` | 30/1 / 650430000/21683171 (29.997) | 30/1 / 129300000/4310387 (29.997) |
+| Format duration | 240.934896 s | 143.679556 s |
+| Time base | 1/90000 | 1/90000 |
+| First / last PTS | 0 / 21680173 (240.890811 s) | 0 / 12928164 (143.646267 s) |
+| Decoded frames (`nb_read_frames`) | 7227 | 4310 |
+| Frame interval, min / max | 2696 / 13840 ticks (30.0 / 153.8 ms) | 2696 / 9333 ticks (30.0 / 103.7 ms) |
+| Intervals outside 2990-3010 ticks | 21 | 3 |
+| Rotation side data / `rotate` tag | absent | absent |
+
+**Both files are VFR.** The nominal rate is 30/1, but the frame intervals vary and the longest
+gaps are three to five nominal frames, which looks like dropped frames. **No rotation metadata
+is present** in either file. The 90-degree rotation in defect 1 belongs to the printed sheet,
+not the stream.
+
+## Round 5 result
+
+### Ingest
+
+The existing ingest path refused both clips before writing anything:
+
+```
+.venv/Scripts/witness.exe ingest data/raw/real_panel_v1_clean.mp4 --data-origin real --output artifacts/sessions
+{"error": "Video exceeds the configured short-clip duration or frame limit."}   exit 2
+.venv/Scripts/witness.exe ingest data/raw/real_panel_v1_skipped.mp4 --data-origin real --output artifacts/sessions
+{"error": "Video exceeds the configured short-clip duration or frame limit."}   exit 2
+```
+
+The binding limit is `max_duration_seconds = 120.0` in `config/defaults.toml`. The clips are
+240.9 s and 143.7 s long, and both frame counts are under the 20000-frame limit. No session
+was created and no build ran. Changing the limit, trimming or re-encoding the clips, and adding
+a decoder were all out of scope for this round, so the stop is the result.
+
+### What `build` would have done, from code rather than footage
+
+Nothing in the offline pipeline turns video frames into events: `build` reads `events.json`
+from the session, and no offline step writes it (the observation step needs the model, which
+is NOT_RUN). With zero events, `coverage`, `ordering` and `undocumented` evaluated against
+`data/procedures/mock_panel_v1.json` return 10 `skipped`, 0 and 0 findings. That procedure
+also describes rotating a hex driver on ten M4 fasteners, not pencil marks in boxes. This
+paragraph comes from calling the audit functions directly, not from the clips.
+
+### Comparison with the key
+
+| Clip | Expected | Actual | Match? |
+|---|---|---|---|
+| `real_panel_v1_clean.mp4` | no findings | not ingested (exit 2, duration limit); 0 findings produced | not measured |
+| `real_panel_v1_skipped.mp4` | skipped slot 6; order violation 3/4 | not ingested (exit 2, duration limit); 0 findings produced | not measured |
+
+1. **Clean clip false positive?** Not measured, because no build ran. Offline, any build of
+   this clip would report all 10 slots as `skipped`. The trigger would be the absence of an
+   observation step, not the hand, the rotated print or the camera angle.
+2. **Did the skipped clip find box 6?** No. The detector never saw a frame, so far-row scale at
+   the recorded 20-25 degree angle was not tested. An offline build would list slot 6 as
+   `skipped` only because it lists every slot, which is not detection.
+3. **Did the skipped clip report the 3/4 order violation?** No. The pipeline does model order
+   (`ordering` computes a minimum out-of-order review set), but only over events, and the real
+   path produces none.
+
+Outcome: found nothing, because nothing ran past ingest. Recorded as measured.
+
+## Round 6 measurement — deterministic box extractor
+
+Measured 2026-10-27. Everything above this heading is unchanged. The extractor rule (D029,
+`src/witness/perception/boxes.py`) and its constants were written into code and into
+`docs/DECISIONS.md` before either clip was run through it, and none of them changed after.
+`events.json` was produced by `witness boxes`, never by hand. The model path stayed `NOT_RUN`.
+
+### Steps
+
+| Step | `real_panel_v1_clean.mp4` | `real_panel_v1_skipped.mp4` |
+|---|---|---|
+| Ingest (limit now 300 s, P-028a) | exit 0, session `c603edd1-557d-4abf-ada1-50151429780a` | exit 0, session `64bb0543-c663-451b-93b2-1cb75ca59f0c` |
+| Planned samples (5 fps) | 1205 | not measured |
+| `witness boxes` | exit 0; 3 events | exit 2: `Expected 10 printed boxes inside the sheet, found 11.` No file written |
+| Perspective residual (uv) | 0.1017 | not measured |
+| `witness build` | `artifacts/real_clean_01/report.html`; hash chain recomputes | not built (see below) |
+
+### Comparison with the key
+
+| Clip | Expected | Actual marks | Findings | Match |
+|---|---|---|---|---|
+| `real_panel_v1_clean.mp4` | 10 marks, no findings | 3 (BOX_01, BOX_07, BOX_10) | 7 `skipped` (BOX_02, 03, 04, 05, 06, 08, 09); 0 order; 0 undocumented | no |
+| `real_panel_v1_skipped.mp4` | 9 marks, box 6 absent, 3/4 out of order | none: layout failed loudly | none: not built | no |
+
+Outcome: **found some** on the clean clip, **found nothing** on the skipped clip.
+
+### Why, from the measured diagnostics (`box_marks.json`) — no threshold was changed
+
+- **Clean clip, missed marks.** Every box ended darker than its baseline: final/baseline
+  ratios run from 0.907 to 0.957. The rule needs 0.92 or lower, sustained. The evidence still at
+  about 208 s shows boxes 1-9 covered in light diagonal hatching over the whole box, a
+  smaller luminance drop (4-9%) than the dense quarter-box shading the 8% margin was derived
+  from. The physical premise behind the margin was wrong for this operator's marking style.
+  That is the finding, and it stays recorded rather than tuned away.
+- **Clean clip, timestamps.** BOX_01 and BOX_07 both have onset 205.2 s and BOX_10 has 212.8 s.
+  For a box whose drop hovers at the margin, the onset is the last time noise pushed it back
+  above the threshold, not the moment it was marked. So the three emitted timestamps are not
+  mark times, and the order they imply is not the operator's order.
+- **Skipped clip, layout failure.** The eleventh candidate is a sliver of paper at the bottom-left
+  frame edge (x 0-106, y 524-539 at 960x540), cut off from the sheet component, with box-like
+  size and fill. The rule has no "touches the frame border" exclusion. Adding one now would
+  change the rule after seeing the result, so it is proposed (D029 proposals) and not applied.
+- **Why the skipped session was not built.** It has no `events.json`, and `build` treats an
+  absent file as an empty event list. Building it would turn the extractor's loud failure into a
+  quiet report of ten `skipped` findings, exactly the failure mode round 6 exists to remove.
+
+### The three questions
+
+1. **Did the clean clip produce a false positive?** No event was emitted for an unmarked box
+   (the key says all ten were marked). The 7 `skipped` findings are false negatives of the
+   extractor, caused by a margin set above the contrast of light hatching.
+2. **Did the skipped clip find box 6?** It was never measured: extraction stopped at the layout
+   step on the edge sliver. The far row was located in the clean clip, so scale alone did not
+   prevent locating it.
+3. **Order violation (3/4)?** Not reported, because the skipped clip produced no events. The
+   pipeline does model order: `ordering` in `src/witness/audit/ordering.py` reports a minimum
+   review set outside a longest increasing subsequence of `observed_order`, and the extractor
+   assigns `observed_order` by onset time in `events_from_onsets`. With unreliable onsets
+   (above), even a successful extraction would not yet support an order claim.
+
+This is two clips of one scene. Nothing here shows the extractor works on other footage.
+

@@ -28,6 +28,7 @@ from witness.evidence.manifest import (
     create_session,
     write_report_manifest,
 )
+from witness.perception.boxes import extract_box_events
 from witness.reports.pdf import render_pdf
 from witness.reports.render import EvidenceImage, render_report
 
@@ -162,6 +163,12 @@ def main(argv: list[str] | None = None) -> int:
     build.add_argument("--session", type=Path, required=True)
     build.add_argument("--procedure", type=Path, required=True)
     build.add_argument("--out", type=Path, required=True)
+    boxes = subparsers.add_parser(
+        "boxes", help="Write deterministic pencil-mark events for an ingested panel session"
+    )
+    boxes.add_argument("--session", type=Path, required=True)
+    boxes.add_argument("--video", type=Path, required=True)
+    boxes.add_argument("--procedure", type=Path, required=True)
     sam = subparsers.add_parser("sam", help="Offline estimate and explicitly gated image probe")
     sam_commands = sam.add_subparsers(dest="sam_command", required=True)
     estimate = sam_commands.add_parser(
@@ -181,6 +188,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "build":
             print(json.dumps(_build_report(args.session, args.procedure, args.out), sort_keys=True))
+            return 0
+        if args.command == "boxes":
+            summary = extract_box_events(args.session, args.video, args.procedure)
+            print(json.dumps(summary, sort_keys=True))
             return 0
         if args.command == "sam":
             settings = load_settings(args.config)

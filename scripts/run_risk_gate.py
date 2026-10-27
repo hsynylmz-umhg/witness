@@ -12,6 +12,10 @@ from witness.perception.events import detect_events
 from witness.synthetic.gen_masks import generate_sequences, sampled_track
 
 
+def _without_timestamp(document):
+    return [line for line in document.split("\n") if not line.startswith("Measured UTC: ")]
+
+
 def measure(cases, fps, config):
     rows = []
     for case in cases:
@@ -172,7 +176,9 @@ def main() -> int:
     marker = "\n## Labelling audit"
     if marker in previous:
         text += previous[previous.index(marker) :]
-    target.write_text(text, encoding="utf-8", newline="\n")
+    # Rewrite only when something besides the timestamp changed, so a re-run leaves no diff.
+    if _without_timestamp(text) != _without_timestamp(previous):
+        target.write_text(text, encoding="utf-8", newline="\n")
     print("SYNTHETIC risk-gate summary")
     print("| Cases | TP | FP | FN | Precision | Recall | Real perception |")
     print("|---:|---:|---:|---:|---:|---:|---|")

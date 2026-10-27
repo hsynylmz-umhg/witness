@@ -351,17 +351,39 @@ Resolved later in round 4 at the operator's direction: the bulk of both entry fi
 corrected three stale statements: the `witness build` usage, "no linter configured" (ruff is
 configured), and an "open right now" section that carried test counts outside this file.
 
+## Round 6 — deterministic box extractor and first end-to-end real build
+
+- P-028a/b/c resolved (`docs/DECISIONS.md`, round 6): ingest limit 300 s; new extractor
+  `src/witness/perception/boxes.py` behind `witness boxes`; new procedure
+  `data/procedures/panel_boxes_v1.json`. `mock_panel_v1.json` is unchanged.
+- Three SYNTHETIC extractor tests in `tests/unit/test_boxes.py`, none needing ffmpeg: ten
+  marks, box 6 unmarked, and a hand crossing a box and leaving (no event).
+- `scripts/run_risk_gate.py` rewrites `docs/RISK_GATE.md` only when more than the timestamp
+  changed. The configuration hash in that file changed once, because `config/defaults.toml` changed.
+- Round 5 real-media result, superseded here: both clips were refused at the 120 s ingest
+  limit and nothing was built (D028).
+- Real-media outcome: found some on the clean clip, found nothing on the skipped clip
+  (D029 and `docs/REAL_MEDIA.md`). The model path stays `NOT_RUN`.
+
 ## Current
 
-Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working tree as of round 4.
+Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working tree as of round 6.
 `pytest -q` is the only command that produces the suite numbers.
 
 | Check | Result |
 |---|---|
-| `.venv/Scripts/python.exe -m pytest -q` | 123 passed, 0 errors, 0 failed |
-| `.venv/Scripts/python.exe -m pytest -q -m "not ffmpeg"` | 116 passed, 0 errors, 0 failed, 7 deselected |
+| `.venv/Scripts/python.exe -m pytest -q` | 126 passed, 0 errors, 0 failed |
+| `.venv/Scripts/python.exe -m pytest -q -m "not ffmpeg"` | 119 passed, 0 errors, 0 failed, 7 deselected |
 | `.venv/Scripts/python.exe scripts/run_risk_gate.py` | exit 0; TP=10, FP=1, FN=3 |
 | `.venv/Scripts/python.exe -m ruff check .` / `ruff format --check .` | pass / pass |
 | `.venv/Scripts/python.exe scripts/validate_workspace.py` | exit 0 |
 | Spend | USD 0.00; refusal exit 2 (D027) |
 
+Real media, kept separate from the synthetic figures (never summed or averaged with them).
+Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`; extractor rule
+`panel_boxes_rule_v1` (D029); details in `docs/REAL_MEDIA.md`.
+
+| Clip | Ingest | `witness boxes` | Marks (expected) | Findings (expected) | Hash chain |
+|---|---|---|---|---|---|
+| `real_panel_v1_clean.mp4` | exit 0, 1205 samples | exit 0 | 3 (10) | 7 skipped, 0 order (0) | recomputes |
+| `real_panel_v1_skipped.mp4` | exit 0 | exit 2, 11 box candidates | none (9, box 6 absent) | not built (skip 6 + order 3/4) | n/a |

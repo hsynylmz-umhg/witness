@@ -66,3 +66,71 @@ D-002 fix remain valid. Its claim that D-001 did not reproduce is superseded by 
 | D025 | Keep pytest's temp and cache roots inside the project | `addopts` gains `--basetemp=.tmp/pytest` and `cache_dir = ".tmp/.pytest_cache"`; `.tmp/` is ignored. `tests/conftest.py` creates the parent of `--basetemp`, because pytest does not, and a fresh checkout otherwise failed with `FileNotFoundError`. Config was chosen over setting `PYTEST_DEBUG_TEMPROOT` from Python because the temp factory can exist before conftest import. Evidence: the WinError 5 traceback above; after the fix, the round-4 full run had 0 errors. A guard test asserts that the base temp lies inside the repository root. `--basetemp` resolves against the working directory, so pytest must run from the repo root. Running it elsewhere fails the guard instead of passing silently. | Pytest changes `--basetemp` semantics, or the suite has to run from another directory |
 | D026 | Keep both 94-degree `GT=0` camera cases and their labels | Audit in `docs/RISK_GATE.md`. `camera_jitter_94_stop` contains no genuine rotation (12-degree sinusoid, unstable-camera flag on every sample, recorded rotation 0), so it is a correct negative outside the recall denominator. `unflagged_camera_rotation_94_stop` produces a sampled track identical to `clean_94_stop` and differs only by label: a deliberate adversarial gate-trust case whose FP is unavoidable for any estimator using these inputs. No numbers changed and no re-run used new labels. | Later round: rename the jitter case so it drops `94_stop`, and add a positive case with real rotation under flagged jitter |
 | D027 | Paid probing stays refused while credits are absent | With `WITNESS_MAX_SPEND_USD` unset, `.venv/Scripts/witness.exe sam probe --image artifacts/smoke/nonexistent.png --allow-paid` printed `PENDING: WITNESS_MAX_SPEND_USD is not set; no API request sent.` and exited **2**. No `spend.json` exists in the workspace. Spend USD 0.00. | Credits confirmed and the operator sets an explicit budget |
+
+## Round 5 — first real footage
+
+| ID | Decision | Rationale and actual evidence | Revisit condition |
+|---|---|---|---|
+| D028 | First real footage: what it measured and what it did not prove | The operator's key in `docs/REAL_MEDIA.md` was committed before measurement and was not edited. ffprobe 8.0.1 measured both clips: h264/yuv420p 1920x1080, nominal 30/1 but **VFR** (frame intervals 30.0 to 153.8 ms), **no rotation metadata**, PTS origin 0, 7227 and 4310 decoded frames, 240.9 s and 143.7 s. The existing `witness ingest` refused both with `Video exceeds the configured short-clip duration or frame limit.` (exit 2, limit `max_duration_seconds = 120.0`), so no session, build or finding exists for either clip. No threshold, limit, label or decoder changed. Measured: the files' timing properties, and the fact that the ingest guard holds on real files. Not proved: anything about detection, coverage or ordering on real footage. Even with a passing build, two clips of one scene, filmed by one operator under one camera and one light, could not show that the method generalises. Offline the pipeline also has no step that turns frames into events, so a build could only list all ten slots as unobserved. | An operator decision on the proposals below |
+
+Proposed, not adopted (round 5 records them and implements neither):
+
+- **P-028a — real clips versus the 120 s ingest limit.** The limit has no documented rationale. Options: an
+  operator-approved `--config` override per real session, recorded in its manifest, or a
+  segmenting ingest that keeps original PTS. Trimming or re-encoding the source files stays excluded.
+- **P-028b — no offline observation step.** `build` reads `events.json`, which only a model
+  path would write, and that path is NOT_RUN. A real clip can therefore never reach the
+  audit offline. The next real-media round needs either an authorised model run within the
+  D019 budget or a hand-labelled `events.json`, clearly marked as human annotation.
+- **P-028c — procedure mismatch.** `mock_panel_v1.json` describes hex-driver rotation on M4
+  fasteners. The footage shows pencil marks in printed boxes, and that needs its own
+  operator-authored procedure.
+
+## Round 6 — round-5 proposals resolved, deterministic box extractor
+
+Written before either real clip was run through the extractor; results follow in the D029
+measurement line below and in `docs/REAL_MEDIA.md`.
+
+- **P-028a resolved: `max_duration_seconds` 120 -> 300** (`config/defaults.toml` and the
+  `IngestConfig` default). The real clips are genuinely 240.9 s and 143.7 s long, so the 120 s
+  limit was doing its job on files that really are long. It had been calibrated against
+  synthetic clips and never exercised on real footage. Raising it alone changes nothing:
+  without an event source (P-028b), an ingested real clip still builds to ten `skipped`
+  findings. The frame limit (20000) is unchanged. The configuration hash in
+  `docs/RISK_GATE.md` changes because the file changed; the gate numbers do not.
+- **P-028b resolved: adopt the deterministic box extractor (D029).** No hand-written
+  `events.json`, no model call; the model path stays `NOT_RUN`.
+- **P-028c resolved: new procedure `data/procedures/panel_boxes_v1.json`**, left beside
+  `mock_panel_v1.json`, which is unchanged because the synthetic corpus and the risk gate rest
+  on it. The new file uses the existing step schema (action `mark_box`, tool `pencil`) and adds
+  a top-level `sheet` layout. Numbering was read off the first frame: box 1 is the near-left
+  box and numbers run up each column (1/2, 3/4, up to 9/10). That differs from the round-6
+  prompt's "left-to-right from the bottom row".
+
+| ID | Decision | Rationale and actual evidence | Revisit condition |
+|---|---|---|---|
+| D029 | Deterministic pencil-mark extractor for the ten-box panel | `src/witness/perception/boxes.py`, run by `witness boxes --session --video --procedure`. It verifies the video's SHA-256 against the session, decodes planned samples once with ffmpeg as 960x540 gray, finds the sheet (Otsu threshold, largest 4-connected bright component, at least 5% of the frame, else it raises) and the ten printed box interiors as enclosed bright components (else it raises), and measures each box's mean luminance relative to that frame's paper white (90th percentile of sheet pixels). Rule: down when the 1 s trailing median falls 8% below the first-second baseline; marked when the final down run reaches the end of the clip and lasts at least 3 s; onset is the first sample of that run. The 8% margin comes from paper and pencil (graphite at most ~60% of paper reflectance, smallest visible mark taken as a quarter of the interior, so a 10% drop, less 20% slack), not from these clips. Events reuse the only existing evidence-id contract, session-local `event-N` / `evidence-N` with a still at `evidence/evidence-N.png`, and every event carries both. Per-box frame indices and ratios go to `box_marks.json`, because the `events.json` schema does not admit extra keys. No homography: boxes are located as pixel regions, and the residual perspective error is measured per session. A deterministic extractor run on two clips of one scene demonstrates the loop end to end. It does not show the extractor generalises to other sheets, lighting, cameras or operators. Three SYNTHETIC tests pin it, including a hand that crosses a box and leaves without producing an event. | A second scene, or any change to the margin or persistence, which needs a new decision |
+
+**D029 measurement (round 6, after the rule above was fixed).** Clean clip: ingest exit 0,
+1205 samples, perspective residual 0.1017 uv, 3 events (BOX_01, BOX_07, BOX_10), build with 7
+`skipped` findings and 0 order findings; the hash chain recomputes. Expected was 10 marks and
+no findings. Skipped clip: ingest exit 0, then `witness boxes` exit 2 with `Expected 10
+printed boxes inside the sheet, found 11.` (an edge sliver of paper). No events and no build;
+the key expected 9 marks plus the 3/4 order discrepancy. Per-box final/baseline ratios on the
+clean clip are 0.907-0.957, so light whole-box hatching dims a box less than the 8% margin
+assumed, and onsets near the margin are not mark times. Nothing was tuned. Details are in
+`docs/REAL_MEDIA.md`.
+
+Proposed, not adopted (round 6 records them and implements neither; each needs footage that
+is not the answer key, because tuning on these two clips would make the key a training set):
+
+- **P-029a — reject components that touch the frame border** as box candidates. This is
+  geometric and outcome-independent, but it was found by looking at a failure, so it is a new
+  rule version, not a correction.
+- **P-029b — the mark margin's physical premise failed.** Measured drops of 4-9% from light
+  hatching sit at or under the 8% margin. Either the operator's mark becomes a defined dense
+  fill, which is a protocol change for new footage, or the margin is re-derived from a
+  calibration sheet shot separately. Lowering it on these clips is excluded.
+- **P-029c — product claim if neither converges.** If a re-derived rule still cannot separate
+  marks on held-out footage, narrow the claim to verifying a supplied event log rather than
+  perceiving marks from pixels. This is an operator decision.

@@ -1,0 +1,200 @@
+{
+  "_fixture_header": {
+    "authoring": "agent-authored in round 6 from the first frame of both real clips; layout only",
+    "model_output": false,
+    "answer_key": "docs/REAL_MEDIA.md holds the expected outcome; this file holds no outcome"
+  },
+  "procedure_id": "panel_boxes",
+  "rev": "v1",
+  "sheet": {
+    "columns": 5,
+    "rows": 2,
+    "frame": "uv in [0,1]^2 over the printed 5x2 grid as seen by the camera: u runs left to right, v runs from the far row (v=0) to the near row (v=1)",
+    "box_1_corner": "near-left: the box closest to the camera in the leftmost column",
+    "numbering_read_from_footage": "numbers run up each column, near box odd and far box even: 1/2 in column 1, 3/4 in column 2, up to 9/10 in column 5",
+    "cells": {
+      "BOX_01": {
+        "column": 1,
+        "row": "near",
+        "uv": [
+          0.0,
+          0.5,
+          0.2,
+          1.0
+        ]
+      },
+      "BOX_02": {
+        "column": 1,
+        "row": "far",
+        "uv": [
+          0.0,
+          0.0,
+          0.2,
+          0.5
+        ]
+      },
+      "BOX_03": {
+        "column": 2,
+        "row": "near",
+        "uv": [
+          0.2,
+          0.5,
+          0.4,
+          1.0
+        ]
+      },
+      "BOX_04": {
+        "column": 2,
+        "row": "far",
+        "uv": [
+          0.2,
+          0.0,
+          0.4,
+          0.5
+        ]
+      },
+      "BOX_05": {
+        "column": 3,
+        "row": "near",
+        "uv": [
+          0.4,
+          0.5,
+          0.6,
+          1.0
+        ]
+      },
+      "BOX_06": {
+        "column": 3,
+        "row": "far",
+        "uv": [
+          0.4,
+          0.0,
+          0.6,
+          0.5
+        ]
+      },
+      "BOX_07": {
+        "column": 4,
+        "row": "near",
+        "uv": [
+          0.6,
+          0.5,
+          0.8,
+          1.0
+        ]
+      },
+      "BOX_08": {
+        "column": 4,
+        "row": "far",
+        "uv": [
+          0.6,
+          0.0,
+          0.8,
+          0.5
+        ]
+      },
+      "BOX_09": {
+        "column": 5,
+        "row": "near",
+        "uv": [
+          0.8,
+          0.5,
+          1.0,
+          1.0
+        ]
+      },
+      "BOX_10": {
+        "column": 5,
+        "row": "far",
+        "uv": [
+          0.8,
+          0.0,
+          1.0,
+          0.5
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "step_id": "panel-boxes-001",
+      "order": 1,
+      "action": "mark_box",
+      "part_id": "BOX_01",
+      "tool": "pencil",
+      "verbatim": "Shade printed box 1 with a pencil."
+    },
+    {
+      "step_id": "panel-boxes-002",
+      "order": 2,
+      "action": "mark_box",
+      "part_id": "BOX_02",
+      "tool": "pencil",
+      "verbatim": "Shade printed box 2 with a pencil."
+    },
+    {
+      "step_id": "panel-boxes-003",
+      "order": 3,
+      "action": "mark_box",
+      "part_id": "BOX_03",
+      "tool": "pencil",
+      "verbatim": "Shade printed box 3 with a pencil."
+    },
+    {
+      "step_id": "panel-boxes-004",
+      "order": 4,
+      "action": "mark_box",
+      "part_id": "BOX_04",
+      "tool": "pencil",
+      "verbatim": "Shade printed box 4 with a pencil."
+    },
+    {
+      "step_id": "panel-boxes-005",
+      "order": 5,
+      "action": "mark_box",
+      "part_id": "BOX_05",
+      "tool": "pencil",
+      "verbatim": "Shade printed box 5 with a pencil."
+    },
+    {
+      "step_id": "panel-boxes-006",
+      "order": 6,
+      "action": "mark_box",
+      "part_id": "BOX_06",
+      "tool": "pencil",
+      "verbatim": "Shade printed box 6 with a pencil."
+    },
+    {
+      "step_id": "panel-boxes-007",
+      "order": 7,
+      "action": "mark_box",
+      "part_id": "BOX_07",
+      "tool": "pencil",
+      "verbatim": "Shade printed box 7 with a pencil."
+    },
+    {
+      "step_id": "panel-boxes-008",
+      "order": 8,
+      "action": "mark_box",
+      "part_id": "BOX_08",
+      "tool": "pencil",
+      "verbatim": "Shade printed box 8 with a pencil."
+    },
+    {
+      "step_id": "panel-boxes-009",
+      "order": 9,
+      "action": "mark_box",
+      "part_id": "BOX_09",
+      "tool": "pencil",
+      "verbatim": "Shade printed box 9 with a pencil."
+    },
+    {
+      "step_id": "panel-boxes-010",
+      "order": 10,
+      "action": "mark_box",
+      "part_id": "BOX_10",
+      "tool": "pencil",
+      "verbatim": "Shade printed box 10 with a pencil."
+    }
+  ]
+}

@@ -19,7 +19,7 @@ from witness.media.sampling import plan_samples
 class IngestConfig:
     candidate_sample_fps: float = 5.0
     max_file_bytes: int = 1_073_741_824
-    max_duration_seconds: float = 120.0
+    max_duration_seconds: float = 300.0
     max_frame_count: int = 20_000
     probe_timeout_seconds: float = 60.0
 

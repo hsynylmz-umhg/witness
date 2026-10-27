@@ -1,7 +1,7 @@
 # Synthetic perception risk gate
 
-Measured UTC: 2026-10-26T22:40:52.491806Z
-Pipeline 0.1.0; algorithm rotation_stop_v1; configuration SHA-256 c4b6961d4eff2e8191127680034b95cb6b2af87b15e065f64ddc815781d49870.
+Measured UTC: 2026-10-27T17:28:14.229884Z
+Pipeline 0.1.0; algorithm rotation_stop_v1; configuration SHA-256 73ce3d6f5c776dd0403750b7226d84997957faf9047f2c554069d8b44735dd82.
 
 ## Meaning and limits
 
