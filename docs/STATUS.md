@@ -365,9 +365,23 @@ configured), and an "open right now" section that carried test counts outside th
 - Real-media outcome: found some on the clean clip, found nothing on the skipped clip
   (D029 and `docs/REAL_MEDIA.md`). The model path stays `NOT_RUN`.
 
+## Round 7 — texture rule v2, last perception round
+
+- `src/witness/perception/boxes.py` now measures gradient-energy texture relative to the paper
+  margin, with a frame-border exclusion (P-029a) and a hysteresis onset (D029 amendment). The
+  rule was written before the clips were run and was not changed after.
+- `tests/unit/test_boxes.py`: SYNTHETIC frames with sensor noise and light hatching. All three
+  tests fail when run against the saved round-6 brightness extractor.
+- Both clips were ingested again, extracted once and built (`artifacts/real_clean_02/`,
+  `artifacts/real_skipped_02/`); round-6 outputs are kept for comparison.
+- Round 6 real-media result, superseded here: clean 3 marks and 7 `skipped`; skipped not
+  extracted (11 box candidates) and not built.
+- D030: the claim narrows to verifying an event log; the perception gap is stated.
+  `docs/DEMO_ASSETS.md` lists the raw material for the demo.
+
 ## Current
 
-Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working tree as of round 6.
+Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working tree as of round 7.
 `pytest -q` is the only command that produces the suite numbers.
 
 | Check | Result |
@@ -381,9 +395,9 @@ Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working 
 
 Real media, kept separate from the synthetic figures (never summed or averaged with them).
 Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`; extractor rule
-`panel_boxes_rule_v1` (D029); details in `docs/REAL_MEDIA.md`.
+`panel_boxes_rule_v2` (D029 amendment, D030); details in `docs/REAL_MEDIA.md`.
 
-| Clip | Ingest | `witness boxes` | Marks (expected) | Findings (expected) | Hash chain |
-|---|---|---|---|---|---|
-| `real_panel_v1_clean.mp4` | exit 0, 1205 samples | exit 0 | 3 (10) | 7 skipped, 0 order (0) | recomputes |
-| `real_panel_v1_skipped.mp4` | exit 0 | exit 2, 11 box candidates | none (9, box 6 absent) | not built (skip 6 + order 3/4) | n/a |
+| Clip | Marks found (expected) | Findings (expected) | Hash chain |
+|---|---|---|---|
+| `real_panel_v1_clean.mp4` | 9, onsets in step order (10) | 1 skipped BOX_09 (none) | recomputes |
+| `real_panel_v1_skipped.mp4` | 10, BOX_06 false positive (9, box 6 absent) | 3 order: BOX_03, BOX_06, BOX_09 (skip 6 + order 3/4) | recomputes |

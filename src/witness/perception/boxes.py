@@ -1,30 +1,49 @@
-"""Deterministic pencil-mark events for the printed ten-box panel (D029).
+"""Deterministic pencil-mark events for the printed ten-box panel (D029, rule v2, round 7).
 
-The rule below was fixed before either real clip was run through it.
+Why v2 measures texture: rule v1 (round 6) measured mean luminance, which cannot separate a
+pencil from a hand. Both make a box darker. Pencil hatching adds high-frequency structure (dark
+strokes, light gaps), while a hand adds a flat, smooth darkening. Gradient energy sees the
+difference; mean luminance does not.
+
+The rule below was fixed before either real clip was run through it, and is not changed after.
 
 - Frames are decoded once by ffmpeg as 8-bit gray at 960x540; only planned samples are used.
 - Sheet: Otsu threshold on the first sample; the largest 4-connected bright component is the
   sheet. If it covers less than SHEET_MIN_FRACTION of the frame, extraction raises.
-- Boxes: the other bright components whose centre lies inside the sheet bounds, with area
-  between BOX_MIN_FRACTION and BOX_MAX_FRACTION of the frame and bounding-box fill of at least
-  BOX_MIN_FILL. Anything but exactly columns x rows of them raises. Each mask is eroded by
-  MASK_EROSION_PX so printed outlines never enter the mean.
-- Per sample, ratio = mean box luminance / 90th percentile of sheet luminance (paper white),
-  which cancels global auto-exposure.
-- Baseline = median ratio over the first BASELINE_S seconds; smoothed = trailing median over
-  SMOOTH_S seconds. A box is down when smoothed <= baseline * (1 - MARK_MARGIN).
-- MARK_MARGIN = 0.08 comes from paper and pencil, not footage: graphite shading reflects at most
-  about 60% of white paper, and the smallest visible mark is taken as shading over a quarter of
-  the box interior, a mean drop of 0.25 * 0.4 = 10%; the margin keeps a fifth of that as slack.
-- Mark: the last down run reaches the final sample and lasts at least PERSIST_S seconds. A hand
-  that crosses a box and leaves ends its run before the clip does, so it never emits.
-  Onset = first sample of that run.
+- Boxes: the other bright components whose centre lies inside the sheet bounds, whose bounding
+  box stays at least BORDER_PX from every frame edge (the sheet sits inside the frame, so an
+  edge-touching region is a cut-off sliver, not a box: P-029a), with area between
+  BOX_MIN_FRACTION and BOX_MAX_FRACTION of the frame and bounding-box fill of at least
+  BOX_MIN_FILL. Anything but exactly columns x rows of them raises.
+- Windows: each box mask is eroded by MASK_EROSION_PX and the sheet mask by PAPER_EROSION_PX,
+  so no printed outline or sheet edge enters a sample. At 960x540 an outline and its
+  anti-aliased halo are at most about 3 px wide, so 4 px clears them (a judgement call).
+- Gradient energy of a window = mean absolute first difference, horizontal and vertical, over
+  pixel pairs that both lie in the window.
+- Texture ratio = box energy / paper energy (the eroded sheet margin, same frame). Exposure gain
+  scales both alike, so the ratio cancels exposure drift across a long clip.
+- Each box's ratio is normalised by its own baseline: the median over the first BASELINE_S
+  seconds. This cancels the printed digit, which is texture that never changes. Smoothed =
+  trailing median over SMOOTH_S seconds of the normalised ratio.
+- RISE = 2.0: a box is marked only if its smoothed ratio ends at or above twice its baseline.
+  Physics: unmarked paper at this scale gives a mean first difference of a few gray levels
+  (sensor noise and grain). A graphite stroke is roughly 40-60% of paper luminance, a step of
+  tens of gray levels even after downscaling. Hatching repeats that step every few pixels
+  across the box, so it adds several times the paper's own energy. A flat hand adds no first
+  differences inside itself, only one silhouette edge. "At least double" is the judgement call.
+- RELEASE = 1.5, halfway to RISE, is the hysteresis level. The sustained rise is the final run
+  of samples at or above RELEASE that reaches the end of the clip. Noise around RISE cannot
+  restart it, which was the round-6 onset bug.
+- Mark: that run lasts at least PERSIST_S seconds and ends at or above RISE. A hand that crosses
+  a box and leaves ends its run before the clip does. Onset = first sample of the run, which
+  lags the stroke by up to about half of SMOOTH_S.
 
 Measured limitation: there is no homography. Boxes are located as printed regions in pixels, so
 their masks follow perspective; only grid assignment uses order (rows by y, then x). The
 residual perspective error is reported as the largest distance between a box centre,
 normalised to the union of box bounds, and its ideal grid centre.
-Known failure: a hand resting on an unmarked box for PERSIST_S at the very end of a clip.
+Known failure: a textured object (a patterned sleeve) resting on a box for PERSIST_S at the
+very end of a clip.
 """
 
 import json
@@ -48,17 +67,20 @@ SHEET_MIN_FRACTION = 0.05
 BOX_MIN_FRACTION = 0.002
 BOX_MAX_FRACTION = 0.06
 BOX_MIN_FILL = 0.5
-MASK_EROSION_PX = 2
+BORDER_PX = 2
+MASK_EROSION_PX = 4
+PAPER_EROSION_PX = 4
 BASELINE_S = 1.0
 SMOOTH_S = 1.0
-MARK_MARGIN = 0.08
+RISE = 2.0
+RELEASE = 1.5
 PERSIST_S = 3.0
-RULE = "panel_boxes_rule_v1"
+RULE = "panel_boxes_rule_v2"
 
 
 @dataclass(frozen=True)
 class Layout:
-    sheet: np.ndarray
+    paper: np.ndarray
     part_ids: tuple[str, ...]
     masks: tuple[np.ndarray, ...]
     residual: float
@@ -137,8 +159,14 @@ def locate_boxes(frame: np.ndarray, sheet_spec: Mapping[str, Any]) -> Layout:
         ys, xs = np.nonzero(mask)
         fill = size / ((np.ptp(ys) + 1) * (np.ptp(xs) + 1))
         centre_y, centre_x = ys.mean(), xs.mean()
+        inside_frame = (
+            min(ys.min(), xs.min()) >= BORDER_PX
+            and ys.max() < frame.shape[0] - BORDER_PX
+            and xs.max() < frame.shape[1] - BORDER_PX
+        )
         if (
-            fill >= BOX_MIN_FILL
+            inside_frame
+            and fill >= BOX_MIN_FILL
             and sheet_y.min() <= centre_y <= sheet_y.max()
             and sheet_x.min() <= centre_x <= sheet_x.max()
         ):
@@ -171,34 +199,44 @@ def locate_boxes(frame: np.ndarray, sheet_spec: Mapping[str, Any]) -> Layout:
                 raise WitnessError(f"Box {part_id} vanishes after outline erosion.")
             part_ids.append(part_id)
             masks.append(eroded)
-    return Layout(sheet, tuple(part_ids), tuple(masks), residual)
+    paper = _erode(sheet, PAPER_EROSION_PX)
+    if not paper.any():
+        raise WitnessError("Sheet margin vanishes after edge erosion.")
+    return Layout(paper, tuple(part_ids), tuple(masks), residual)
+
+
+def _gradient_energy(dx: np.ndarray, dy: np.ndarray, mask: np.ndarray) -> float:
+    pairs = np.concatenate([dx[mask[:, 1:] & mask[:, :-1]], dy[mask[1:] & mask[:-1]]])
+    return float(pairs.mean())
 
 
 def box_ratios(frame: np.ndarray, layout: Layout) -> np.ndarray:
-    """Return each box's mean luminance relative to this frame's paper white."""
-    white = float(np.percentile(frame[layout.sheet], 90))
-    if white <= 0:
-        raise WitnessError("Sheet has no measurable luminance in a sampled frame.")
-    return np.array([frame[mask].mean() for mask in layout.masks]) / white
+    """Return each box's gradient energy relative to the paper margin in the same frame."""
+    signed = frame.astype(np.int16)
+    dx, dy = np.abs(np.diff(signed, axis=1)), np.abs(np.diff(signed, axis=0))
+    paper = _gradient_energy(dx, dy, layout.paper)
+    if paper <= 0:
+        raise WitnessError("Paper margin shows no measurable texture in a sampled frame.")
+    return np.array([_gradient_energy(dx, dy, mask) for mask in layout.masks]) / paper
 
 
 def mark_onsets(times: np.ndarray, ratios: np.ndarray) -> list[int | None]:
-    """Return the onset sample index of each box's permanent mark, or None."""
+    """Return the first sample of each box's sustained texture rise, or None."""
     if len(times) == 0 or times[-1] - times[0] < BASELINE_S + PERSIST_S:
         raise WitnessError("Clip is too short for the baseline and persistence windows.")
     baseline = np.median(ratios[times - times[0] < BASELINE_S], axis=0)
-    smoothed = np.array(
-        [np.median(ratios[(times <= t) & (times > t - SMOOTH_S)], axis=0) for t in times]
+    if np.any(baseline <= 0):
+        raise WitnessError("A box has no measurable baseline texture.")
+    smoothed = (
+        np.array([np.median(ratios[(times <= t) & (times > t - SMOOTH_S)], axis=0) for t in times])
+        / baseline
     )
-    down = smoothed <= baseline * (1 - MARK_MARGIN)
     onsets: list[int | None] = []
     for box in range(ratios.shape[1]):
-        if not down[-1, box]:
-            onsets.append(None)
-            continue
-        up = np.flatnonzero(~down[:, box])
-        start = int(up[-1]) + 1 if len(up) else 0
-        onsets.append(start if times[-1] - times[start] >= PERSIST_S else None)
+        below = np.flatnonzero(smoothed[:, box] < RELEASE)
+        start = int(below[-1]) + 1 if len(below) else 0
+        sustained = smoothed[-1, box] >= RISE and times[-1] - times[start] >= PERSIST_S
+        onsets.append(start if sustained else None)
     return onsets
 
 
@@ -314,8 +352,9 @@ def extract_box_events(session_dir: Path, video: Path, procedure_path: Path) -> 
     diagnostics = {
         "rule": RULE,
         "constants": {
-            "mark_margin": MARK_MARGIN, "persist_s": PERSIST_S, "baseline_s": BASELINE_S,
-            "smooth_s": SMOOTH_S, "mask_erosion_px": MASK_EROSION_PX, "width": WIDTH,
+            "rise": RISE, "release": RELEASE, "persist_s": PERSIST_S, "baseline_s": BASELINE_S,
+            "smooth_s": SMOOTH_S, "mask_erosion_px": MASK_EROSION_PX,
+            "paper_erosion_px": PAPER_EROSION_PX, "border_px": BORDER_PX, "width": WIDTH,
             "height": HEIGHT,
         },
         "perspective_residual_uv": layout.residual,
@@ -328,7 +367,7 @@ def extract_box_events(session_dir: Path, video: Path, procedure_path: Path) -> 
             {
                 "part_id": part_id,
                 "baseline_ratio": float(np.median(ratios[times - times[0] < BASELINE_S, box])),
-                "min_ratio": float(ratios[:, box].min()),
+                "max_ratio": float(ratios[:, box].max()),
                 "final_ratio": float(ratios[-1, box]),
                 "onset_frame_index": None if onset_s is None else by_time[onset_s],
                 "onset_s": onset_s,

@@ -134,3 +134,35 @@ is not the answer key, because tuning on these two clips would make the key a tr
 - **P-029c — product claim if neither converges.** If a re-derived rule still cannot separate
   marks on held-out footage, narrow the claim to verifying a supplied event log rather than
   perceiving marks from pixels. This is an operator decision.
+
+## Round 7 — the last perception round
+
+Written before either real clip was run through rule v2. The measurement follows in D030.
+
+**D029 amendment (round 7): measure texture, not brightness.** Rule v1 measured mean luminance,
+which cannot separate a pencil from a hand: both make a box darker. Pencil hatching adds
+high-frequency structure (dark strokes, light gaps), and a hand adds a flat, smooth darkening.
+The round-6 margin was not set too high; it measured the wrong property. Rule v2
+(`panel_boxes_rule_v2`, docstring of `src/witness/perception/boxes.py`) replaces the luminance
+test with a texture ratio: mean absolute first difference in the eroded box window, divided by
+the same quantity on the eroded paper margin in the same frame (cancelling exposure drift),
+normalised by the box's own first-second baseline (cancelling the printed digit). A box is
+marked when its 1 s trailing median ends at or above **RISE = 2.0** and the final run at or
+above **RELEASE = 1.5** lasts at least 3 s. Onset is the first sample of that run, which fixes
+the round-6 bug where onset was the last sample to cross the line. RISE comes from the
+contrast of graphite strokes against paper noise; "at least double" is a stated judgement
+call. Windows exclude 4 px of outline and sheet edge. With rule v2 the SYNTHETIC hand test (a
+flat darkening resting on box 3 to the end, plus light 4% hatching on box 1) yields only BOX_01.
+The same three tests fail when run against the saved v1 brightness extractor. No other
+constant changed, and none will change after the measurement.
+
+- **P-029a resolved: adopted.** Candidates whose bounding box comes within 2 px of a frame edge
+  are not boxes: the sheet sits inside the frame, so an edge-touching region is a cut-off
+  sliver. This is a correctness fix against the defect round 6 recorded, not a tuning knob.
+- **P-029b resolved: calibration footage is ruled out for time.** No calibration sheet and no
+  further clip will be shot. If the texture measure fails on these two clips, the limitation is
+  the corpus (two clips, one scene, one operator) and it is recorded as such.
+
+| ID | Decision | Rationale and actual evidence | Revisit condition |
+|---|---|---|---|
+| D030 | Close the perception line: **the claim narrows to verifying an event log, and the perception gap is stated in the submission** | Rule v2 was run once on each clip, unchanged. Clean: 9 of 10 marks, onsets in step order, 1 `skipped` finding (BOX_09 at 1.91x, under RISE 2.0); the key expects 10 and none. Skipped: 10 marks where the key expects 9. BOX_06 is a false positive caused by the sheet sliding about 25 px under the pencil, while the masks stay fixed from the first frame. BOX_09/BOX_10 onsets came before their strokes. Findings were 3 `order_discrepancy` (BOX_03 correct for the 3/4 swap, BOX_06 and BOX_09 spurious) and no `skipped` box 6; the key expects skip(6) plus order(3/4). Both reports were built and both hash chains recompute. The texture measure does separate pencil from a flat hand on SYNTHETIC frames, and recovers most real marks with correct order on the clean clip. On this footage, though, it does not reliably separate a real mark from sheet motion and a pencil hovering above a box. So the submission must not claim perception of marks from pixels. The product claim is the deterministic, evidence-linked verification of an event log: coverage, ordering, evidence ids and a recomputable hash chain. The extractor is shown as a measured demonstration with its misses. Two clips from one scene support neither a positive nor a negative generalisation. | None for perception: round 7 was the hard stop. Re-registration per frame would be the first change if perception is ever reopened |

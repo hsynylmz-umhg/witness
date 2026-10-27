@@ -247,3 +247,61 @@ Outcome: **found some** on the clean clip, **found nothing** on the skipped clip
 
 This is two clips of one scene. Nothing here shows the extractor works on other footage.
 
+## Round 7 measurement — texture rule v2, run once
+
+Measured 2026-10-27. Everything above this heading is unchanged. Rule `panel_boxes_rule_v2`
+(D029 amendment) and its constants (RISE 2.0, RELEASE 1.5, persistence 3 s, 4 px window
+margins, 2 px frame-border exclusion) were written into the module docstring and
+`docs/DECISIONS.md` before either clip was processed, and were not changed afterwards. Each
+clip was ingested into a fresh session and run once. Round-6 sessions and
+`artifacts/real_clean_01/` are untouched.
+
+| Step | `real_panel_v1_clean.mp4` | `real_panel_v1_skipped.mp4` |
+|---|---|---|
+| Session | `34630bce-f60f-42ac-aedf-f01fd9cdb064` | `c9588798-4f17-41b5-b69f-3f07591eb71c` |
+| Samples (5 fps) | 1205 | 719 |
+| `witness boxes` | exit 0, 9 events | exit 0, 10 events (the border rule removed the round-6 sliver) |
+| Perspective residual (uv) | 0.1017 | 0.104 |
+| Build | `artifacts/real_clean_02/report.html`, written | `artifacts/real_skipped_02/report.html`, written |
+| Hash chain | recomputes | recomputes |
+
+### Comparison with the key
+
+| Clip | Expected | Marks found | Box ids, in onset order (onset s) | Order finding | Match |
+|---|---|---|---|---|---|
+| clean | 10 marks, no findings | 9 | 01 (5.6), 02 (19.8), 03 (40.2), 04 (54.6), 05 (81.6), 06 (96.8), 07 (125.2), 08 (154.4), 10 (221.4) | none; 1 `skipped` finding (BOX_09) | no (9/10, onsets monotonic) |
+| skipped | 9 marks, box 6 absent; 3/4 out of order | 10 | 01 (5.6), 02 (22.8), 04 (44.8), 03 (56.4), 05 (71.8), 07 (95.6), 06 (100.6), 08 (102.8), 10 (111.8), 09 (116.8) | 3 `order_discrepancy`: BOX_03, BOX_06, BOX_09 | no |
+
+### What the numbers show, from the diagnostics and the evidence stills — nothing was changed after the run
+
+- **Clean clip: 9 of 10, in the right order.** Every found onset is in step order. BOX_10's
+  221.4 s fits the round-6 still, where box 10 was still blank at about 208 s. BOX_09 ended at
+  1.91x its baseline, just under RISE 2.0. It has the highest baseline of any box (0.87, the
+  near-right corner), which leaves less headroom. That is a miss, recorded as one.
+- **Skipped clip: the 1, 2, 4, 3 start of the operator's sequence is recovered.** The 3/4 swap
+  appears in the onsets (BOX_04 at 44.8 s before BOX_03 at 56.4 s), and `ordering` reports
+  BOX_03.
+- **Skipped clip: BOX_06 is a false positive.** The clip's last frame shows box 6 blank, so the
+  key is right. Between the first and last frames the sheet slid about +25 px horizontally
+  (about +3 / +8 px in the clean clip), measured by correlating outline profiles. The box masks
+  are fixed in the first frame with a 4 px margin, so by the end box 6's window covers printed
+  outline, which reads as texture (4.23x baseline). Rule v2 has no re-registration. This is
+  its measured limitation.
+- **Skipped clip: BOX_09 and BOX_10 onsets are early.** The evidence still at about 119.8 s, 3 s
+  after BOX_09's onset, shows boxes 9 and 10 both blank, with the pencil over the right-hand
+  side. They are marked by the last frame, so the marks are real, but the sustained run began
+  before the strokes. The resulting order (10 before 9) and the BOX_09 order finding are
+  artefacts, not observations.
+- **Missing `skipped` finding for box 6.** It does not appear, because of the BOX_06 false positive.
+
+### The three questions
+
+1. **Clean false positive?** None. One false negative (BOX_09).
+2. **Skipped clip: did it find box 6 absent?** No. Sheet displacement produced a texture rise on the blank box.
+3. **Order violation 3/4?** Found (BOX_03), alongside two spurious order findings (BOX_06,
+   BOX_09). The pipeline models order through `src/witness/audit/ordering.py` over the
+   extractor's onset order.
+
+Corpus limitation (P-029b): two clips, one scene, one operator, one sheet that moves under the
+pencil. No further footage will be shot.
+
