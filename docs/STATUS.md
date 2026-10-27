@@ -400,15 +400,27 @@ configured), and an "open right now" section that carried test counts outside th
 | `real_panel_v1_clean.mp4` | 9, onsets in step order (10) | 1 skipped BOX_09 (none) | recomputes |
 | `real_panel_v1_skipped.mp4` | 10, BOX_06 false positive (9, box 6 absent) | 3 order: BOX_03, BOX_06, BOX_09 (skip 6 + order 3/4) | recomputes |
 
+## Round 9 — build contract and demo raw material
+
+- `src/witness/cli.py`: `build` exits 2 and writes no report when the session has no
+  `events.json`. The message names the file and the session path. An empty log still builds.
+- `tests/integration/test_offline_pipeline.py`: absent log refused with no output directory;
+  empty log builds with one `skipped` coverage finding per step (10 for `panel_boxes_v1`); the
+  existing valid-log test is unchanged.
+- `artifacts/real_clean_03/` and `artifacts/real_skipped_03/` deleted (`docs/REAL_MEDIA.md`,
+  round 9). The round-8 runner was a scratch file outside the repository and was not changed.
+- `scripts/overlay_still.py` wrote `artifacts/real_clean_02/overlay/frame-7224.png`;
+  `docs/DEMO_SCRIPT.md` added (8 beats, 180 s). Perception files unchanged.
+
 ## Current
 
-Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working tree as of round 8.
+Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working tree as of round 9.
 `pytest -q` is the only command that produces the suite numbers.
 
 | Check | Result |
 |---|---|
-| `.venv/Scripts/python.exe -m pytest -q` | 130 passed, 0 errors, 0 failed |
-| `.venv/Scripts/python.exe -m pytest -q -m "not ffmpeg"` | 123 passed, 0 errors, 0 failed, 7 deselected |
+| `.venv/Scripts/python.exe -m pytest -q` | 132 passed, 0 errors, 0 failed |
+| `.venv/Scripts/python.exe -m pytest -q -m "not ffmpeg"` | 125 passed, 0 errors, 0 failed, 7 deselected |
 | `.venv/Scripts/python.exe scripts/run_risk_gate.py` | exit 0; TP=10, FP=1, FN=3 |
 | `.venv/Scripts/python.exe -m ruff check .` / `ruff format --check .` | pass / pass |
 | `.venv/Scripts/python.exe scripts/validate_workspace.py` | exit 0 |
@@ -420,7 +432,7 @@ amendment, D031); details in `docs/REAL_MEDIA.md`.
 
 | Clip | Marks found (expected) | Findings (expected) | Hash chain |
 |---|---|---|---|
-| `real_panel_v1_clean.mp4` | none: registration refused at frame 1558, ratio 1.97 (10) | not measured; `_03` built over an absent event log (none) | recomputes |
-| `real_panel_v1_skipped.mp4` | none: registration refused at frame 1733, ratio 1.93 (9, box 6 absent) | not measured; `_03` built over an absent event log (skip 6 + order 3/4) | recomputes |
+| `real_panel_v1_clean.mp4` | none: registration refused at frame 1558, ratio 1.97 (10) | not measured; no report (none) | n/a, no report |
+| `real_panel_v1_skipped.mp4` | none: registration refused at frame 1733, ratio 1.93 (9, box 6 absent) | not measured; no report (skip 6 + order 3/4) | n/a, no report |
 
-Perception is frozen (D031). Next task: the demo, under the claim D030 and D031 state.
+Perception is frozen (D031). Next task: render the demo under `docs/DEMO_SCRIPT.md`.

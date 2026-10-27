@@ -365,3 +365,11 @@ Search range: +/-46 px on both clips (under half the smallest box pitch).
 
 Corpus limitation, unchanged: two clips, one scene, one operator. Round 8 was the last
 perception round, and no constant is changed after this run.
+
+## Round 9 — invalid round-8 reports removed
+
+Rule v3 refused both clips at registration, so round 8 produced no events. The `_03` reports
+it left behind were built over an absent event log and were invalid. `artifacts/real_clean_03/`
+and `artifacts/real_skipped_03/` were deleted on 2026-10-28, and `build` now refuses a session
+without `events.json`. `artifacts/real_clean_02/` and `artifacts/real_skipped_02/` (rule v2, tag
+`r7`) are the current real-clip record.

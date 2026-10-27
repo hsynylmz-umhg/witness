@@ -73,3 +73,45 @@ def test_synthetic_motion_to_audit_html_and_manifest_hash_chain(tmp_path, capsys
         ).hexdigest()
     )
     assert result["model_integration_status"] == "NOT_RUN"
+
+
+def _bare_session(tmp_path):
+    session = tmp_path / "session"
+    session.mkdir()
+    (session / "session.json").write_text(
+        json.dumps(
+            {"source_sha256": "SYNTHETIC_SOURCE_HASH", "created_at_utc": "2026-10-28T00:00:00Z"}
+        ),
+        encoding="utf-8",
+    )
+    (session / "config.json").write_text("{}", encoding="utf-8")
+    return session
+
+
+def _build(session, output):
+    return main(
+        [
+            "build", "--session", str(session),
+            "--procedure", "data/procedures/panel_boxes_v1.json", "--out", str(output),
+        ]
+    )  # fmt: skip
+
+
+def test_SYNTHETIC_absent_event_log_is_refused_and_writes_no_report(tmp_path, capsys):
+    session, output = _bare_session(tmp_path), tmp_path / "report"
+    assert _build(session, output) == 2
+    message = json.loads(capsys.readouterr().err)["error"]
+    assert "events.json" in message and str(session.resolve()) in message
+    assert not output.exists()
+
+
+def test_SYNTHETIC_empty_event_log_is_a_recorded_state_and_builds(tmp_path, capsys):
+    # Present but empty: every step lacks evidence, so coverage asks for human review of each.
+    session, output = _bare_session(tmp_path), tmp_path / "report"
+    (session / "events.json").write_text('{"events": []}', encoding="utf-8")
+    assert _build(session, output) == 0
+    assert json.loads(capsys.readouterr().out)["findings"] == 10
+    findings = json.loads((output / "findings.json").read_text(encoding="utf-8"))
+    rows = findings["findings"] if isinstance(findings, dict) else findings
+    assert {row["kind"] for row in rows} == {"skipped"}
+    assert (output / "report.html").is_file()

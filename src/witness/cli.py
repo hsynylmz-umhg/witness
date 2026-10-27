@@ -104,7 +104,10 @@ def _build_report(session_dir: Path, procedure_path: Path, output_dir: Path) -> 
     if not isinstance(procedure_document, dict):
         raise WitnessError("Procedure JSON must be an object.")
     events_path = session_dir / "events.json"
-    event_document = _load_json(events_path, "events") if events_path.exists() else {"events": []}
+    if not events_path.is_file():
+        # An absent log is a refused or unrun extraction, not "nothing happened" (round 8).
+        raise WitnessError(f"Session has no events.json; no report is written: {events_path}")
+    event_document = _load_json(events_path, "events")
     procedure = load_procedure(procedure_document)
     events = load_audit_events(event_document)
     findings = (
