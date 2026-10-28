@@ -1,102 +1,67 @@
 # WITNESS
 
-Evidence-linked observations from one fixed-camera civil assembly video.
+## What this is
 
-WITNESS aims to help CubeSat/model-satellite teams review visible tool motion
-against procedure steps and replay supporting evidence. It does not measure torque,
-prove correct assembly, certify flight readiness or infer omission from missing
-evidence. Local hashes require trusted references and do not prevent rewriting a
-complete record.
+WITNESS reads an event log of what happened during a fixed-camera assembly procedure and turns
+it into findings: coverage gaps, out-of-order steps and undocumented parts. Every finding carries
+an evidence id or it does not exist, except a `skipped` finding, which records that no evidence
+was supplied for a step and asks for human review. The report's hash
+chain is recomputed from the output bytes, so anyone holding the files can check it.
 
-**Current delivery: offline perception contract, synthetic risk gate, and audit
-report slice.** Local video ingest, PTS-based sampling, strict SAM mask/line-subset
-decoding, a pure rotation/stop candidate detector, and a zero-model-call procedure
-audit/report work offline. The synthetic experiment measures precision 10/11 and
-recall 10/13 across 25 cases. These are estimator results, not real perception
-quality. A paid single-image probe exists behind explicit gates; its live branch is
-PENDING. No real video/SAM integration has run.
+## What is proven, and where the number lives
 
-## Run locally
+| Claim | Value | Source |
+|---|---|---|
+| Risk gate | 25 labelled cases: 10 TP, 1 FP, 3 FN | `docs/RISK_GATE.md` |
+| Test suite | 132 passed | `docs/STATUS.md` |
+| Hash chain | recomputes from the output bytes | `tests/integration/test_offline_pipeline.py` |
+| Real footage | the extractor refused at registration on both clips: correlation peak ratio 1.97 and 1.93, against a required 2.0 | `docs/REAL_MEDIA.md` |
+| Model integration | `NOT_RUN`; spend USD 0.00 | `docs/STATUS.md` |
 
-Use compatible Python 3.11+ and the project-local environment. Tested: Python
-3.13.14, uv 0.10.5, FFmpeg 8.0.1. Exact dependency resolutions/hashes are in uv.lock.
-ffprobe is needed for ingest; ffmpeg is also needed for marked media tests.
+## What is not proven
 
-Run separate PowerShell commands from the project root:
+All 25 risk-gate cases are synthetic. The real footage is one scene, one camera and one lighting
+condition, and on it the pencil-mark extractor disagreed with the answer key: an earlier rule
+missed and invented marks, and the final rule refused rather than guess. Two clips are a
+demonstration, not a generalisation. Nothing here measures torque, tightening quality, assembly
+correctness or flight readiness, and the local hashes are not a signature: without an external
+trust anchor they do not stop someone rewriting the files and the manifest together.
 
-```powershell
-$env:UV_CACHE_DIR = Join-Path (Get-Location) '.cache/uv'
-uv venv --python python .venv
-uv sync --locked
-.venv/Scripts/witness.exe --help
-.venv/Scripts/witness.exe ingest data/raw/mock-panel.mp4 --data-origin real --config config/defaults.toml
-.venv/Scripts/witness.exe build --session artifacts/sessions/<session-id> --procedure data/procedures/mock_panel_v1.json --out artifacts/report
-```
+## Run it
 
-Skip venv creation if .venv exists. No keys or network are needed for ingest. The
-CLI does not load .env. Use --data-origin synthetic for generated footage. Candidate
-5 fps remains experimental; override with --candidate-fps only as an experiment.
-No frame extraction, transcoding or video upload is performed.
-
-`witness build` uses an optional local events.json sidecar. Without it, it produces
-high-severity coverage review gaps for the hand-authored procedure; those are not
-proof of a physical omission. It writes a self-contained report.html, evidence
-directory, findings.json and local hash-chain manifest. PDF is only written when
-optional local WeasyPrint is available; otherwise report.pdf.blocked.txt records the
-HTML fallback. No model call is made.
-
-A successful ingest writes session.json, timeline.json, legacy samples.json, new
-sampling.json, effective config.json and the initial manifest/digest under a fresh
-UUID directory in artifacts/sessions. sampling.json preserves original frame/PTS
-identity and records unknown-time source indices without interpolation. Defaults
-bound local inputs to 120 seconds, 1 GiB, 20,000 decoded frames and a 60-second
-ffprobe timeout. Supported local containers are broader than SAM's documented media
-formats. Inputs remain unchanged and output sessions stay outside version control.
-
-## Offline contract, estimator and spend checks
+From the repository root in PowerShell, with the project environment in `.venv`
+(`uv sync --locked` creates it) and FFmpeg 8 on `PATH`:
 
 ```powershell
 .venv/Scripts/python.exe -m pytest -q
-.venv/Scripts/python.exe -m pytest -m 'not ffmpeg' -q
-.venv/Scripts/ruff.exe check src tests scripts
-.venv/Scripts/ruff.exe format --check src tests scripts
-.venv/Scripts/python.exe scripts/validate_workspace.py
-.venv/Scripts/python.exe scripts/check_sam_contract.py
-.venv/Scripts/python.exe -m scripts.run_risk_gate
-.venv/Scripts/witness.exe sam estimate --images 2 --frames 1
+.venv/Scripts/python.exe scripts/run_risk_gate.py
+.venv/Scripts/python.exe -m witness ingest data/raw/real_panel_v1_clean.mp4 --data-origin real
+.venv/Scripts/python.exe -m witness build --session artifacts/sessions/SESSION_ID --procedure data/procedures/panel_boxes_v1.json --out artifacts/report
 ```
 
-The native parser diagnostic is informational and uses only a documented SYNTHETIC
-vector. Its earlier failure was caused by an extra marker in our diagnostic;
-D017 records the correction. The test suite covers 21 conformance fixtures, 200
-random-mask round trips, uncertain tails, bad gates, timestamp gaps, sampling and
-budget refusals. The unmarked suite also passes with ffmpeg/ffprobe absent from PATH.
+The first two need no media. The real clips are not in the repository. `ingest` prints the new
+session id, which replaces `SESSION_ID`. `build` refuses a session that has no `events.json`,
+because a missing log is not the same as an empty one.
 
-A live command is available as witness sam probe --image <local PNG/JPEG> --allow-paid.
-It refuses unless positive environment/config caps, operator-confirmed available
-credits, a local key and a strictly sufficient remaining budget are all present.
-Defaults deny it. One bounded request, no retry/redirect; a shared ledger reserves
-cost before sending and mirrors a spend sidecar to the selected session. Failure
-keeps uncertain cost reserved. Published-rate calculated cost is not an account
-invoice. See TOOLING for exact refusal messages; no paid request ran this round.
+## Repo map
 
-## Project context and next gate
+- `.claude/`: development-only agent skills and their provenance
+- `artifacts/`: local sessions, reports and overlay stills; git-ignored
+- `config/`: default limits for ingest and sampling
+- `data/`: procedures; `data/raw/` holds local footage and is git-ignored
+- `demo-video/`: the Remotion project that renders the demo film
+- `docs/`: rules, decisions, status and every measured number
+- `scripts/`: risk gate, workspace validator and the overlay still writer
+- `src/`: the `witness` package: ingest, sampling, perception, audit and reports
+- `tests/`: offline unit and integration tests, with fixtures named `SYNTHETIC_`
 
-Shared instructions live only in [RULES](docs/RULES.md); AGENTS.md, CLAUDE.md and
-GEMINI.md are thin references. Historical design material and archived scaffold
-are held privately by the operator, preserved unchanged and not published. Fresh
-checkouts can omit them; the validator checks available recorded hashes and emits
-one informational skip line for missing private material. The baseline inventory
-remains unchanged. The operator alone performs Git mutations.
+## Third-party tools
 
-Read [STATUS](docs/STATUS.md), [measured RISK_GATE](docs/RISK_GATE.md),
-[product brief](docs/PROJECT_BRIEF.md), [roadmap](docs/ROADMAP.md),
-[API verification](docs/API_VERIFICATION.md), [data contracts](docs/DATA_CONTRACTS.md),
-[recording/evaluation](docs/EVALUATION.md), [tooling](docs/TOOLING.md),
-[environment](docs/ENVIRONMENT.md), [decisions](docs/DECISIONS.md),
-[provenance](docs/NEW_WORK.md), [sources](docs/PRIOR_ART.md) and [demo plan](docs/DEMO.md).
+Three MIT-licensed agent skills (ponytail, hallmark and humanizer) were used while writing this
+code and its documents. They are listed with their sources in `.claude/skills/PROVENANCE.md`.
+They are development aids: none of them runs in the pipeline, and none of their output ships as
+product code.
 
-The next gate requires a permitted 30-second fixed-camera mock-panel recording,
-then real mask/ID and source-time validation. Procedure extraction, coverage-agent
-planning, voice, generated cards, alternative providers, CI, deployment and
-publication remain unimplemented.
+## The demo
+
+`witness_demo_v2.mp4`, 180 s; `docs/DEMO_SCRIPT.md` is its script.
