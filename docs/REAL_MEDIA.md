@@ -373,3 +373,20 @@ it left behind were built over an absent event log and were invalid. `artifacts/
 and `artifacts/real_skipped_03/` were deleted on 2026-10-28, and `build` now refuses a session
 without `events.json`. `artifacts/real_clean_02/` and `artifacts/real_skipped_02/` (rule v2, tag
 `r7`) are the current real-clip record.
+
+Round 10: build folders hold only what `build` writes (the manifest-listed files plus the `evidence/` stills it copies). The overlay still moved from `artifacts/real_clean_02/overlay/` to `artifacts/overlays/real_clean_02_frame-7224.png`; the `_02` hash chain still recomputes.
+
+## Bolt footage (B-roll, not measured)
+
+Two clips of a driver turning numbered screws, filed 2026-10-28: intended use case, not a
+measurement. They were ingested only to confirm the reader opens them. No procedure, no
+extraction and no findings were produced, on purpose; `boxes` and `build` were not run on these
+sessions.
+
+| File | Ingest | Session folder | Duration (s) | Frames | Frame rate | CFR / VFR | Rotation | Resolution |
+|---|---|---|---:|---:|---|---|---|---|
+| `data/raw/demo_bolts_v1_clean.mp4` | exit 0 | `artifacts/sessions/9f372963-24b6-4271-b097-640821f82f61/` | 120.846 | 3630 | nominal 30, average 32670000/1087613 | frame interval 0.0333-0.0334 s, constant | none | 1920x1080, h264 |
+| `data/raw/demo_bolts_v2_skipped.mp4` | exit 0 | `artifacts/sessions/2267abee-b679-4786-84b1-6ba1259bedd9/` | 95.179 | 2858 | nominal 30, average 257220000/8566087 | VFR: frame interval 0.0324-0.0667 s | none | 1920x1080, h264 |
+
+The film's beat 1 shows source seconds 0-8 of the clean clip, without its audio, under the
+burned-in line "intended use case — not a measurement".

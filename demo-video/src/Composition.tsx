@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import {
   AbsoluteFill,
+  Audio,
   CalculateMetadataFunction,
   Composition,
   IFrame,
   Img,
+  OffthreadVideo,
   Sequence,
   continueRender,
   delayRender,
@@ -21,6 +23,13 @@ const SCRIPT = staticFile("witness/DEMO_SCRIPT.md");
 
 type Beat = { number: number; seconds: number; onScreen: string; spoken: string; sources: string };
 type Props = { beats: Beat[] };
+
+// sync-assets.mjs masks the repository and home paths; any user path left fails the render.
+const LEAK = /[A-Za-z]:(\\\\|\\|\/)Users(\\\\|\\|\/)/;
+const guard = (beat: number, text: string) => {
+  if (LEAK.test(text)) throw new Error(`Beat ${beat} would show an absolute user path.`);
+};
+const voice = (beat: number) => `witness/voiceover/beat-${String(beat).padStart(2, "0")}.wav`;
 
 const parseScript = (text: string): Beat[] =>
   text
@@ -42,6 +51,15 @@ const calculateMetadata: CalculateMetadataFunction<Props> = async () => {
   const total = beats.reduce((sum, beat) => sum + beat.seconds, 0);
   if (beats.length !== 8 || total !== 180) {
     throw new Error(`DEMO_SCRIPT.md parsed to ${beats.length} beats, ${total} s; expected 8, 180 s.`);
+  }
+  // Played clip durations, measured by ffprobe in sync-assets.mjs on this render.
+  const audio: Record<string, number> = await (await fetch(staticFile("witness/audio.json"))).json();
+  for (const beat of beats) {
+    guard(beat.number, `${beat.onScreen} ${beat.spoken} ${beat.sources}`);
+    const clip = audio[beat.number];
+    if (clip === undefined || clip > beat.seconds) {
+      throw new Error(`Beat ${beat.number}: voiceover is ${clip} s, slot is ${beat.seconds} s.`);
+    }
   }
   return { durationInFrames: total * FPS, props: { beats } };
 };
@@ -101,7 +119,8 @@ const Page: React.FC<{ file: string; label: string }> = ({ file, label }) => (
 );
 
 // Shows runs of lines of a text file, each starting at a marker line, exactly as stored.
-const Excerpt: React.FC<{ file: string; parts: [string, number][]; label: string }> = ({
+const Excerpt: React.FC<{ beat: number; file: string; parts: [string, number][]; label: string }> = ({
+  beat,
   file,
   parts,
   label,
@@ -118,14 +137,16 @@ const Excerpt: React.FC<{ file: string; parts: [string, number][]; label: string
           if (start < 0) throw new Error(`${file} has no line starting with ${marker}`);
           return all.slice(start, start + lines).join("\n");
         });
-        setText(runs.join("\n…\n"));
+        const shown = runs.join("\n…\n");
+        guard(beat, shown);
+        setText(shown);
         continueRender(handle);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- parts is a fresh literal each render
-  }, [file, JSON.stringify(parts), handle]);
+  }, [beat, file, JSON.stringify(parts), handle]);
   return (
     <AbsoluteFill style={{ background: "#0b1220", padding: "56px 48px" }}>
-      <pre style={{ margin: 0, color: "#e2e8f0", font: "21px/1.45 monospace", whiteSpace: "pre-wrap" }}>
+      <pre style={{ margin: 0, color: "#e2e8f0", font: "21px/1.45 monospace", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
         {text}
       </pre>
       <Label text={label} />
@@ -133,17 +154,40 @@ const Excerpt: React.FC<{ file: string; parts: [string, number][]; label: string
   );
 };
 
+// Beat 1 opens with the silent bolt excerpt cut by sync-assets.mjs (8 s), then the panel still.
+const BOLTS_FRAMES = 8 * FPS;
+
 const Visual: React.FC<{ beat: Beat }> = ({ beat }) => {
   const half = (beat.seconds * FPS) / 2;
   switch (beat.number) {
     case 1:
-      return <Still file="clean_evidence-1.png" label="artifacts/real_clean_02/evidence/evidence-1.png — a frame of real_panel_v1_clean.mp4" />;
+      return (
+        <>
+          <Sequence durationInFrames={BOLTS_FRAMES}>
+            <AbsoluteFill style={{ background: "#0b1220" }}>
+              <OffthreadVideo muted src={staticFile("witness/bolts_beat1.mp4")} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              <Label text="data/raw/demo_bolts_v1_clean.mp4, 0-8 s — B-roll" />
+              <div
+                style={{
+                  position: "absolute", left: 0, right: 0, top: 48, padding: "14px 0", textAlign: "center",
+                  background: "rgba(11, 18, 32, 0.85)", color: "#fde68a", font: "bold 52px Arial, sans-serif",
+                }}
+              >
+                intended use case — not a measurement
+              </div>
+            </AbsoluteFill>
+          </Sequence>
+          <Sequence from={BOLTS_FRAMES}>
+            <Still file="clean_evidence-1.png" label="artifacts/real_clean_02/evidence/evidence-1.png — a frame of real_panel_v1_clean.mp4" />
+          </Sequence>
+        </>
+      );
     case 2:
       return <Page file="clean_report.html" label="artifacts/real_clean_02/report.html" />;
     case 3:
-      return <Excerpt file="clean_manifest.json" parts={[["{", 40]]} label="artifacts/real_clean_02/manifest.json" />;
+      return <Excerpt beat={beat.number} file="clean_manifest.json" parts={[["{", 40]]} label="artifacts/real_clean_02/manifest.json" />;
     case 4:
-      return <Excerpt file="RISK_GATE.md" parts={[["All 25 cases are SYNTHETIC", 5], ["All conditions: TP=", 3]]} label="docs/RISK_GATE.md" />;
+      return <Excerpt beat={beat.number} file="RISK_GATE.md" parts={[["All 25 cases are SYNTHETIC", 5], ["All conditions: TP=", 3]]} label="docs/RISK_GATE.md" />;
     case 5:
       return (
         <>
@@ -159,16 +203,16 @@ const Visual: React.FC<{ beat: Beat }> = ({ beat }) => {
                 <Page file="skipped_report.html" label="real_skipped_02/report.html" />
               </div>
               <div style={{ position: "relative", flex: 1 }}>
-                <Excerpt file="REAL_MEDIA.md" parts={[["| Clip | Expected | Marks found | Box ids, in onset order", 4]]} label="docs/REAL_MEDIA.md — Round 7 vs key" />
+                <Excerpt beat={beat.number} file="REAL_MEDIA.md" parts={[["| Clip | Expected | Marks found | Box ids, in onset order", 4]]} label="docs/REAL_MEDIA.md — Round 7 vs key" />
               </div>
             </AbsoluteFill>
           </Sequence>
         </>
       );
     case 6:
-      return <Excerpt file="REAL_MEDIA.md" parts={[["## Round 8 measurement", 20], ["| clean | 10 marks, no findings | none", 2]]} label="docs/REAL_MEDIA.md — Round 8" />;
+      return <Excerpt beat={beat.number} file="REAL_MEDIA.md" parts={[["## Round 8 measurement", 20], ["| clean | 10 marks, no findings | none", 2]]} label="docs/REAL_MEDIA.md — Round 8" />;
     case 7:
-      return <Excerpt file="STATUS.md" parts={[["## Current", 26]]} label="docs/STATUS.md — Current" />;
+      return <Excerpt beat={beat.number} file="STATUS.md" parts={[["## Current", 26]]} label="docs/STATUS.md — Current" />;
     default:
       return <Page file="clean_report.html" label="artifacts/real_clean_02/report.html" />;
   }
@@ -201,6 +245,7 @@ export const WitnessDemo: React.FC<Props> = ({ beats }) => {
         return (
           <Sequence key={beat.number} from={start} durationInFrames={beat.seconds * FPS}>
             <BeatView beat={beat} />
+            <Audio src={staticFile(voice(beat.number))} />
           </Sequence>
         );
       })}

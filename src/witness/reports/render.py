@@ -111,7 +111,8 @@ def render_report(
             "This report measures deterministic review findings from supplied visual-event "
             "records. "
             "It does not measure torque values, tightening quality, correct assembly, transferred "
-            "force, or flight readiness.</p>",
+            "force, or flight readiness. A skipped finding means no evidence was supplied for "
+            "that step, not that a defect was found.</p>",
             "<h2>Findings</h2><table><thead><tr><th>Id</th><th>Kind</th>"
             "<th>Severity</th><th>Part</th><th>Explanation</th></tr></thead>"
             f"<tbody>{rows}</tbody></table>",

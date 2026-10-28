@@ -412,9 +412,41 @@ configured), and an "open right now" section that carried test counts outside th
 - `scripts/overlay_still.py` wrote `artifacts/real_clean_02/overlay/frame-7224.png`;
   `docs/DEMO_SCRIPT.md` added (8 beats, 180 s). Perception files unchanged.
 
+## Round 10 — demo render
+
+- PART A go/no-go, started 2026-10-27T21:24:26Z: `npx remotion render MyComp out/probe.mp4` in
+  `demo-video/` exited 0 in 77 s; ffprobe: h264, 1280x720, 60 frames, 2.000 s. The fallback shot
+  list was not written.
+- `demo-video/src/Composition.tsx`: one 1920x1080, 30 fps composition, `WitnessDemo`, that parses
+  beats, durations and spoken text from `docs/DEMO_SCRIPT.md` at render time. Its panels are files
+  copied by `demo-video/sync-assets.mjs` (no video copied). `npx remotion render WitnessDemo
+  out/witness_demo_v1.mp4` exited 0 in 117 s; ffprobe: h264, 1920x1080, 5400 frames, 180.000 s.
+- Overlay moved to `artifacts/overlays/real_clean_02_frame-7224.png`; the `_02` hash chain
+  recomputes. The report template adds one sentence: a skipped finding means no evidence was
+  supplied for that step, not that a defect was found. Existing `_02` reports are not rebuilt.
+- `docs/DEMO_VO.md`: 317 words, about 126.8 s at 150 wpm; no beat over its slot.
+
+## Round 11 — voiceover, B-roll and the finished cut
+
+- Moved, not copied, from the operator's download folder: `beat-01.mp3` to `beat-08.mp3` and
+  `MANIFEST.md` to `demo-video/public/voiceover/`, and both bolt clips to `data/raw/`. The
+  operator's reference photo was left in place.
+- `demo-video/sync-assets.mjs` runs before every `npm run render`:
+  - It masks the repository and home paths as `<repo>` / `<home>` in the copied text, and fails
+    on any remaining user path. The composition fails the render with the beat number if one
+    reaches a beat (proven with a planted path: "Beat 7 would show an absolute user path.").
+  - It re-measures each MP3 with ffprobe (largest drift from `MANIFEST.md` 0.077 s; it fails
+    above 0.5 s), normalises each clip with loudnorm (measured -16.8 to -15.7 LUFS integrated)
+    and adds 100 ms fades. It fails if a clip is longer than its beat.
+- Bolt clips: intended use case, not a measurement. Both ingested with exit 0; no procedure,
+  extraction or findings (`docs/REAL_MEDIA.md`, "Bolt footage"). Beat 1 shows 8 s of the clean
+  clip, silent, under a burned-in disclaimer.
+- `npm run render` wrote `demo-video/out/witness_demo_v2.mp4`; ffprobe: h264 1920x1080, 5400
+  frames, 180.000 s, AAC audio 180.011 s.
+
 ## Current
 
-Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working tree as of round 9.
+Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working tree as of round 11.
 `pytest -q` is the only command that produces the suite numbers.
 
 | Check | Result |
@@ -435,4 +467,4 @@ amendment, D031); details in `docs/REAL_MEDIA.md`.
 | `real_panel_v1_clean.mp4` | none: registration refused at frame 1558, ratio 1.97 (10) | not measured; no report (none) | n/a, no report |
 | `real_panel_v1_skipped.mp4` | none: registration refused at frame 1733, ratio 1.93 (9, box 6 absent) | not measured; no report (skip 6 + order 3/4) | n/a, no report |
 
-Perception is frozen (D031). Next task: render the demo under `docs/DEMO_SCRIPT.md`.
+Perception is frozen (D031). Next task: the operator watches `witness_demo_v2.mp4` end to end and approves or rejects it for submission.
