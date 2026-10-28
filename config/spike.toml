@@ -1,0 +1,6 @@
+# Round-13 model spike override for scripts/model_spike.py (D032). The cap matches the round's
+# approved USD 5.00. credits_confirmed stays false until the operator has checked the account
+# balance; setting it to true is the operator's confirmation, and no one else may make it.
+[budget]
+max_usd = 5.0
+credits_confirmed = false

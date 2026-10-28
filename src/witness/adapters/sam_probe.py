@@ -23,8 +23,15 @@ class _NoRedirect(HTTPRedirectHandler):
         return None
 
 
-def send_image(image: bytes, mime: str, key: str, settings: Settings) -> dict:
-    """Single POST, no redirect/retry; no raw request/response is retained or logged."""
+def send_image(
+    image: bytes,
+    mime: str,
+    key: str,
+    settings: Settings,
+    prompt: str = "tool",
+    sink: Callable[[bytes], None] | None = None,
+) -> dict:
+    """Single POST, no redirect/retry. Nothing is logged; only `sink` sees the raw response."""
     body = {
         "model": "sam-3.1",
         "stream": False,
@@ -34,7 +41,7 @@ def send_image(image: bytes, mime: str, key: str, settings: Settings) -> dict:
                 "type": "message",
                 "role": "user",
                 "content": [
-                    {"type": "input_text", "text": "tool"},
+                    {"type": "input_text", "text": prompt},
                     {
                         "type": "input_image",
                         "image_url": f"data:{mime};base64,"
@@ -60,6 +67,8 @@ def send_image(image: bytes, mime: str, key: str, settings: Settings) -> dict:
         result = json.loads(raw)
         if not isinstance(result, dict) or result.get("status") != "completed":
             raise WitnessError("Provider did not return a completed image response.")
+        if sink is not None:
+            sink(raw)
         return {"completed_images": 1}
     except (HTTPError, URLError, TimeoutError, OSError, ValueError) as error:
         if isinstance(error, WitnessError):

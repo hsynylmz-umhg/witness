@@ -444,19 +444,31 @@ configured), and an "open right now" section that carried test counts outside th
 - `npm run render` wrote `demo-video/out/witness_demo_v2.mp4`; ffprobe: h264 1920x1080, 5400
   frames, 180.000 s, AAC audio 180.011 s.
 
+## Round 13 — Meta model spike, blocked at the credential gate
+
+- `scripts/model_spike.py` and `src/witness/model/spike.py`: one gated SAM 3.1 image request per
+  frame through the existing `probe_image` gate. The raw response is saved unmodified and the
+  parsed box candidates are drawn on an overlay. `send_image` gained a prompt and a raw-response
+  sink, and its defaults are unchanged. Go/no-go criteria are in the script's docstring,
+  written before any call.
+- Six frames extracted (clean 30, 3613, 7224; skipped 30, 2155, 4307). Every request was refused
+  before sending: credits not confirmed, and `MODEL_API_KEY` absent. No call, no ledger, spend
+  USD 0.00 (`docs/MODEL_SPIKE.md`, D032).
+
 ## Current
 
-Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 11.
+Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 13.
 `pytest -q` is the only command that produces the suite numbers.
 
 | Check | Result |
 |---|---|
-| `.venv/Scripts/python.exe -m pytest -q` | 132 passed, 0 errors, 0 failed |
-| `.venv/Scripts/python.exe -m pytest -q -m "not ffmpeg"` | 125 passed, 0 errors, 0 failed, 7 deselected |
+| `.venv/Scripts/python.exe -m pytest -q` | 135 passed, 0 errors, 0 failed |
+| `.venv/Scripts/python.exe -m pytest -q -m "not ffmpeg"` | 128 passed, 0 errors, 0 failed, 7 deselected |
 | `.venv/Scripts/python.exe scripts/run_risk_gate.py` | exit 0; TP=10, FP=1, FN=3 |
 | `.venv/Scripts/python.exe -m ruff check .` / `ruff format --check .` | pass / pass |
 | `.venv/Scripts/python.exe scripts/validate_workspace.py` | exit 0 |
 | Spend | USD 0.00; refusal exit 2 (D027) |
+| Model spike (round 13) | BLOCKED: no credential; 0 calls; spend USD 0.00; model status still `NOT_RUN` (D032) |
 
 Real media, kept separate from the synthetic figures (never summed or averaged with them).
 Interpreter `<repo>\.venv\Scripts\python.exe`; extractor rule `panel_boxes_rule_v3` (D029 round-8 amendment, D030
@@ -467,4 +479,4 @@ amendment, D031); details in `docs/REAL_MEDIA.md`.
 | `real_panel_v1_clean.mp4` | none: registration refused at frame 1558, ratio 1.97 (10) | not measured; no report (none) | n/a, no report |
 | `real_panel_v1_skipped.mp4` | none: registration refused at frame 1733, ratio 1.93 (9, box 6 absent) | not measured; no report (skip 6 + order 3/4) | n/a, no report |
 
-Perception is frozen (D031). Next task: the operator watches `witness_demo_v2.mp4` end to end and approves or rejects it for submission.
+Perception is frozen (D031). Next task: the operator sets `MODEL_API_KEY`, confirms credits in `config/spike.toml` and runs the six-frame command in `docs/MODEL_SPIKE.md`.
