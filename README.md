@@ -13,10 +13,10 @@ chain is recomputed from the output bytes, so anyone holding the files can check
 | Claim | Value | Source |
 |---|---|---|
 | Risk gate | 25 labelled cases: 10 TP, 1 FP, 3 FN | `docs/RISK_GATE.md` |
-| Test suite | 135 passed | `docs/STATUS.md` |
+| Test suite | 144 passed | `docs/STATUS.md` |
 | Hash chain | recomputes from the output bytes | `tests/integration/test_offline_pipeline.py` |
 | Real footage | the extractor refused at registration on both clips: correlation peak ratio 1.97 and 1.93, against a required 2.0 | `docs/REAL_MEDIA.md` |
-| Model integration | `NOT_RUN`; spend USD 0.00 | `docs/STATUS.md` |
+| Model integration | `SPIKED`: Meta SAM 3.1 regions, named by geometry, produced event logs matching the key on both clips; 78 calls in round 14, ledger USD 0.2100 | `docs/STATUS.md` |
 
 ## What is not proven
 

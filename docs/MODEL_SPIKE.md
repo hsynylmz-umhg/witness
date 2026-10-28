@@ -84,3 +84,45 @@ for transport) has never made a live call, so its first run is also the B5 clien
 It proves that the harness, the frame extraction and the spend gate work end to end and refuse
 without a credential and confirmed credits. It does not show that the Meta model can or cannot
 find the boxes: no model output exists yet.
+
+## Round 13, run by the operator after the commit above
+
+After the round-13 commit the operator set `MODEL_API_KEY` and confirmed credits in
+`config/spike.toml`, then ran the six-frame command. The shared ledger (`artifacts/spend-ledger.json`)
+holds six completed `sam-3.1` requests at USD 0.0025 each, USD 0.0150 in total. Every saved
+response parses to ten regions. Per-call latency was not written to a file; the operator reported
+about 3.5 s. Read against the B4 table, Q1 frames with 10 plausible regions (6 of 6) and cost per
+frame (USD 0.0025) fall in the pass column. The region order is arbitrary, so the overlay labels
+drawn then were the model's arrival order, not sheet numbers.
+
+## Round 14 — identity by geometry, anchored calls, both clips
+
+Rules, written before the clip runs: identity v2 in `src/witness/model/identity.py` (nearest cell
+centre in normalised sheet coordinates, kept only inside that cell's uv rectangle, collisions to
+the nearer region, a tie within 0.02 assigns nobody) and `model_anchor_rule_v1` in
+`src/witness/model/events.py` (one call every 5 s, per-box acceptance within a quarter of the
+smallest box spacing, anchor events recorded). The texture measure is called unchanged.
+
+Identity v1 capped the distance at 0.1 uv. Checked on the six saved round-13 responses (no new
+call), 60 of 60 regions picked the correct nearest cell, but 4 lay 0.102 to 0.114 from it, so v1
+would have dropped them. v2 replaced the cap with the cell rectangle before either clip was run.
+
+| | Clean | Skipped |
+|---|---|---|
+| Session | `8984ed86-bebf-418e-9e43-c43968614eb9` | `58bb85e4-77eb-4297-882a-aac467a05bca` |
+| Anchors and calls | 49 | 29 |
+| Regions per anchor | 10 at every anchor | 10 at every anchor |
+| Unassigned / collisions / anchor events | 0 / 0 / 0 | 0 / 0 / 0 |
+| Largest move between two anchors | 33.3 px | 30.8 px |
+| Call latency | median 5.1 s; 42 of 49 within 10 s; maximum 21.9 s | median 5.3 s; 28 of 29 within 10 s; maximum 12.0 s |
+| Marks found | 10 | 9 (BOX_06 not marked, 1.06x baseline) |
+| Findings | none | `skipped` BOX_06; `order_discrepancy` BOX_03 |
+| Key | 10 marks, no findings | box 6 skipped, 3/4 out of order |
+| Match | yes | yes |
+
+Cost: 78 calls, USD 0.1950 this round; ledger total USD 0.2100 of the USD 5.00 cap.
+
+What this shows: on these two clips, Meta SAM 3.1 regions named by geometry and measured by the
+unchanged texture rule produce event logs that match the key. What it does not show: anything
+beyond one scene, one camera and one lighting condition, and the model's region quality remains
+the ceiling on everything downstream.

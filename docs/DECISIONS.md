@@ -212,3 +212,21 @@ refusal; they are not a measurement. Details are in `docs/REAL_MEDIA.md`, "Round
 | ID | Decision | Rationale and actual evidence | Revisit condition |
 |---|---|---|---|
 | D032 | **A Meta segmentation model is a candidate generator, never an authority.** Its regions may replace the extractor's box masks. The texture measure still decides whether a box is marked, the audit still decides findings, and a finding still needs an evidence id; a model result never overrides a deterministic audit result. The model path lives in `src/witness/model/` and `scripts/model_spike.py`, beside `perception/`, which stays frozen (D031). New status word **`SPIKED`**: at least one live, authorized request to a named Meta model completed through the spend gate on recorded inputs, its response bytes are saved unmodified, and the result was judged against go/no-go criteria written before the first request. `SPIKED` says nothing about integration into the event path or about accuracy on a full clip. A refused or blocked spike does not qualify, and `NOT_RUN` stays until one does. **Round-13 outcome: blocked, not spiked.** | The submission requires genuine use of a Meta model, and the repository had made no model call. The spike harness extracted the six fixed frames (clean 30, 3613, 7224; skipped 30, 2155, 4307), and every request was refused inside the existing gate before sending: "PENDING: available credits are not confirmed; no API request sent." `MODEL_API_KEY` is absent from the process and from the User and Machine environment. No ledger was written; spend USD 0.00. The go/no-go table in `docs/MODEL_SPIKE.md` therefore has no verdict row. | When the operator sets `MODEL_API_KEY`, confirms credits in `config/spike.toml` and runs the command in `docs/MODEL_SPIKE.md`. The verdict then comes from the fixed table, and the status becomes `SPIKED` only if a request completes |
+
+## Round 14 — the model proposes, the code names
+
+**D032 amendment (round 14): identity is assigned by arithmetic.** The model's object ids and
+arrival order are never box identities. `witness.model.identity` (identity v2) names each region
+by its nearest procedure cell centre in normalised sheet coordinates, and keeps it only if its
+centre lies inside that cell's uv rectangle. A collision goes to the nearer region; a tie within
+0.02 uv assigns nobody; a region outside every cell is unassigned and produces no event. Identity
+v1 (a 0.1 uv distance cap) was revised before the clip runs after it dropped 4 of 60 correctly
+placed regions on the saved round-13 responses, which is recorded in the module docstring and
+`docs/MODEL_SPIKE.md`. Outcome: on both clips, 78 anchors, every region was named, with 0
+unassigned and 0 collisions. The event logs match the key: clean 10 marks and no findings;
+skipped 9 marks, `skipped` BOX_06 and `order_discrepancy` BOX_03. The model status for the event
+path is `SPIKED` under the round-13 definition. It is not `DONE`: this is two clips of one scene.
+
+| ID | Decision | Rationale and actual evidence | Revisit condition |
+|---|---|---|---|
+| D033 | **Anchored sampling, not per-frame calls.** The model runs on the first planned sample at or after every 5 s of clip time; between anchors the box masks stay where the last accepted anchor put them, and the unchanged texture rule runs on every planned sample (5 fps). A re-anchor updates a box only if the same box is named again within a quarter of the smallest box spacing; otherwise the old mask stays and an anchor event is recorded | Per-frame calls on the 5 fps plan would be 1205 + 719 = 1924 calls (USD 4.81); anchoring took 49 + 29 = 78 calls (USD 0.1950), about 25 times fewer. Tolerated drift: the largest move between two anchors was 33.3 px (clean) and 30.8 px (skipped), inside the tolerance, with 0 anchor events; round 8 measured the sheet sliding about 25 px over a whole clip. Drift within a 5 s step is not followed | A clip where anchor events appear, or where the sheet moves faster than about a quarter of a box spacing in 5 s |

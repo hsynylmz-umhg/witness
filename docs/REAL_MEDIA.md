@@ -390,3 +390,25 @@ sessions.
 
 The film's beat 1 shows source seconds 0-8 of the clean clip, without its audio, under the
 burned-in line "intended use case — not a measurement".
+
+## Model-produced events
+
+Round 14, 2026-10-28. The event logs below were produced from Meta SAM 3.1 regions through the
+spend gate: the model proposes regions, `witness.model.identity` names them by geometry, and the
+unchanged texture rule (`panel_boxes_rule_v3` constants) decides marked or not. Each clip was
+ingested into a fresh session and run once. Nothing above this heading was edited.
+
+| Clip | Session | Anchors (calls) | Unassigned / collisions / anchor events | Marks found, onset order (s) | Findings | Key | Match |
+|---|---|---|---|---|---|---|---|
+| clean | `8984ed86-bebf-418e-9e43-c43968614eb9` | 49 | 0 / 0 / 0 | 01 (5.8), 02 (26.6), 03 (45.0), 04 (65.4), 05 (81.8), 06 (103.6), 07 (127.4), 08 (160.2), 09 (188.6), 10 (219.6) | none | 10 marks, no findings | yes |
+| skipped | `58bb85e4-77eb-4297-882a-aac467a05bca` | 29 | 0 / 0 / 0 | 01 (8.4), 02 (23.0), 04 (46.2), 03 (58.2), 05 (72.0), 07 (95.6), 08 (114.6), 09 (126.0), 10 (134.6) | `skipped` BOX_06; `order_discrepancy` BOX_03 | box 6 skipped, 3/4 out of order | yes |
+
+Reports: `artifacts/real_clean_04/report.html` and `artifacts/real_skipped_04/report.html`; both
+hash chains recompute. Cost: 78 calls, USD 0.1950 (ledger total USD 0.2100 including the six
+round-13 calls). Box 6 in the skipped clip ended at 1.06x its baseline: the pencil shadow seen on
+it in the round-13 mid-clip frame did not produce a mark.
+
+Limits: two clips, one scene, one camera, one lighting condition, one operator. The model's own
+region quality is the cap on everything downstream; the identity rule and the texture rule can
+only decline what the model gets wrong, not correct it. Onset times are the texture rule's,
+lagging the stroke by up to about half a second.

@@ -455,20 +455,32 @@ configured), and an "open right now" section that carried test counts outside th
   before sending: credits not confirmed, and `MODEL_API_KEY` absent. No call, no ledger, spend
   USD 0.00 (`docs/MODEL_SPIKE.md`, D032).
 
+## Round 14 — model-produced event logs on both clips
+
+- `src/witness/model/identity.py` (identity v2), `events.py` (`model_anchor_rule_v1`) and
+  `overlay.py`. Ten offline SYNTHETIC tests cover permutation, gap, collision, off-sheet, tie,
+  anchoring, drift acceptance and label legibility. `src/witness/perception/` is unchanged.
+- Clean session `8984ed86-…`: 49 anchors, 10 marks, 0 findings. Skipped session `58bb85e4-…`:
+  29 anchors, 9 marks, `skipped` BOX_06 and `order_discrepancy` BOX_03. Both match the key, and
+  both hash chains recompute (`docs/REAL_MEDIA.md`, "Model-produced events"; D032 amendment,
+  D033).
+- Cost: 78 calls, USD 0.1950; ledger total USD 0.2100 of the USD 5.00 cap.
+
 ## Current
 
-Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 13.
+Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 14.
 `pytest -q` is the only command that produces the suite numbers.
 
 | Check | Result |
 |---|---|
-| `.venv/Scripts/python.exe -m pytest -q` | 135 passed, 0 errors, 0 failed |
-| `.venv/Scripts/python.exe -m pytest -q -m "not ffmpeg"` | 128 passed, 0 errors, 0 failed, 7 deselected |
+| `.venv/Scripts/python.exe -m pytest -q` | 144 passed, 0 errors, 0 failed |
+| `.venv/Scripts/python.exe -m pytest -q -m "not ffmpeg"` | 137 passed, 0 errors, 0 failed, 7 deselected |
 | `.venv/Scripts/python.exe scripts/run_risk_gate.py` | exit 0; TP=10, FP=1, FN=3 |
 | `.venv/Scripts/python.exe -m ruff check .` / `ruff format --check .` | pass / pass |
 | `.venv/Scripts/python.exe scripts/validate_workspace.py` | exit 0 |
-| Spend | USD 0.00; refusal exit 2 (D027) |
-| Model spike (round 13) | BLOCKED: no credential; 0 calls; spend USD 0.00; model status still `NOT_RUN` (D032) |
+| Spend (before round 13, history) | USD 0.00; refusal exit 2 (D027) |
+| Model spike (round 13, history) | BLOCKED at commit time: no credential; 0 calls; spend USD 0.00; `NOT_RUN` (D032). The operator then ran 6 calls, USD 0.0150 (`docs/MODEL_SPIKE.md`) |
+| Model event path (round 14) | `SPIKED`: Meta SAM 3.1 anchors every 5 s, identity by geometry; clean 10 marks / 0 findings, skipped 9 marks / skip 6 + order 3/4, both matching the key; 78 calls, USD 0.1950; ledger USD 0.2100 of 5.00 (D032, D033) |
 
 Real media, kept separate from the synthetic figures (never summed or averaged with them).
 Interpreter `<repo>\.venv\Scripts\python.exe`; extractor rule `panel_boxes_rule_v3` (D029 round-8 amendment, D030
@@ -479,4 +491,4 @@ amendment, D031); details in `docs/REAL_MEDIA.md`.
 | `real_panel_v1_clean.mp4` | none: registration refused at frame 1558, ratio 1.97 (10) | not measured; no report (none) | n/a, no report |
 | `real_panel_v1_skipped.mp4` | none: registration refused at frame 1733, ratio 1.93 (9, box 6 absent) | not measured; no report (skip 6 + order 3/4) | n/a, no report |
 
-Perception is frozen (D031). Next task: the operator sets `MODEL_API_KEY`, confirms credits in `config/spike.toml` and runs the six-frame command in `docs/MODEL_SPIKE.md`.
+Perception is frozen (D031). Next task: re-render the film against the model-produced result (round 15).
