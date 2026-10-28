@@ -57,7 +57,7 @@ the pre-existing spending rules; environment and command flags alone do not bypa
 the agent's environment. On the operator machine the same `tests/unit/test_workspace.py` run
 gave **1 passed, 2 errors**, with this traceback:
 `_pytest/pathlib.py:175: in find_prefixed / for x in os.scandir(root) / PermissionError:
-[WinError 5] Erişim engellendi: 'C:\Users\-HSYN-\AppData\Local\Temp\pytest-of--HSYN-'`.
+[WinError 5] Erişim engellendi: '<home>\AppData\Local\Temp\pytest-of--HSYN-'`.
 The cause was pytest's temp root and cache directory, not imports. D021's import guard and the
 D-002 fix remain valid. Its claim that D-001 did not reproduce is superseded by D025.
 

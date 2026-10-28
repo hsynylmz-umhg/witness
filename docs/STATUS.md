@@ -293,7 +293,7 @@ _pytest/tmpdir.py:213: in getbasetemp
 _pytest/pathlib.py:175: in find_prefixed
   for x in os.scandir(root):
 E   PermissionError: [WinError 5] Erişim engellendi:
-    'C:\Users\-HSYN-\AppData\Local\Temp\pytest-of--HSYN-'
+    '<home>\AppData\Local\Temp\pytest-of--HSYN-'
 ```
 
 A separate `PytestCacheWarning: could not create cache path ...\witness\.pytest_cache\v\cache:
@@ -320,10 +320,10 @@ never an import problem, which is why the round-3 import guard did not change th
 
 ### Interpreter finding
 
-Bare `pytest` on this machine resolves to `C:\Users\-HSYN-\anaconda3\python.exe` with pytest
+Bare `pytest` on this machine resolves to `<home>\anaconda3\python.exe` with pytest
 8.3.4. It does not have the `witness` package installed and stops with 11 collection errors
 (`ModuleNotFoundError: No module named 'witness'`). Every count below comes from
-`C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe` (pytest 9.1.1). Use only that
+`<repo>\.venv\Scripts\python.exe` (pytest 9.1.1). Use only that
 interpreter for any number recorded here.
 
 ### Labelling audit, budget refusal, real media
@@ -446,7 +446,7 @@ configured), and an "open right now" section that carried test counts outside th
 
 ## Current
 
-Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working tree as of round 11.
+Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 11.
 `pytest -q` is the only command that produces the suite numbers.
 
 | Check | Result |
@@ -459,7 +459,7 @@ Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`, working 
 | Spend | USD 0.00; refusal exit 2 (D027) |
 
 Real media, kept separate from the synthetic figures (never summed or averaged with them).
-Interpreter `C:\Users\-HSYN-\Desktop\witness\.venv\Scripts\python.exe`; extractor rule `panel_boxes_rule_v3` (D029 round-8 amendment, D030
+Interpreter `<repo>\.venv\Scripts\python.exe`; extractor rule `panel_boxes_rule_v3` (D029 round-8 amendment, D030
 amendment, D031); details in `docs/REAL_MEDIA.md`.
 
 | Clip | Marks found (expected) | Findings (expected) | Hash chain |
