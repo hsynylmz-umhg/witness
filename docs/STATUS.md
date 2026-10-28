@@ -466,21 +466,37 @@ configured), and an "open right now" section that carried test counts outside th
   D033).
 - Cost: 78 calls, USD 0.1950; ledger total USD 0.2100 of the USD 5.00 cap.
 
+## Round 15 — the record says what happened
+
+- `build` stamps `model_integration_status` from the session's own event log, not a constant.
+  It reports `RUN` with the model, anchor count and summed spend when the log came from
+  `model_anchor_rule_v1`, and `NOT_RUN` otherwise. A log that claims the model without its
+  sidecar and spend record is refused. Three offline tests cover the new behaviour; session.json,
+  the ingest record, is unchanged.
+- Rebuilt without any model call: `artifacts/real_clean_05/` (RUN, sam-3.1, 49 anchors, USD 0.1225,
+  0 findings) and `artifacts/real_skipped_05/` (RUN, sam-3.1, 29 anchors, USD 0.0725, `skipped`
+  BOX_06 and `order_discrepancy` BOX_03). Both hash chains recompute. The `_04` reports are kept.
+- `docs/DEMO_SCRIPT.md` beat 7 now states the measured model run, and `docs/DEMO_VO.md` was
+  regenerated (46 words, about 18.4 s of the 20 s slot). The film was re-rendered as
+  `demo-video/out/witness_demo_v3.mp4` (180.000 s, 5400 frames, AAC 180.011 s), but it still
+  carries the old beat-7 audio, so it is PENDING VO.
+
 ## Current
 
-Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 14.
+Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 15.
 `pytest -q` is the only command that produces the suite numbers.
 
 | Check | Result |
 |---|---|
-| `.venv/Scripts/python.exe -m pytest -q` | 144 passed, 0 errors, 0 failed |
-| `.venv/Scripts/python.exe -m pytest -q -m "not ffmpeg"` | 137 passed, 0 errors, 0 failed, 7 deselected |
+| `.venv/Scripts/python.exe -m pytest -q` | 147 passed, 0 errors, 0 failed |
+| `.venv/Scripts/python.exe -m pytest -q -m "not ffmpeg"` | 140 passed, 0 errors, 0 failed, 7 deselected |
 | `.venv/Scripts/python.exe scripts/run_risk_gate.py` | exit 0; TP=10, FP=1, FN=3 |
 | `.venv/Scripts/python.exe -m ruff check .` / `ruff format --check .` | pass / pass |
 | `.venv/Scripts/python.exe scripts/validate_workspace.py` | exit 0 |
 | Spend (before round 13, history) | USD 0.00; refusal exit 2 (D027) |
 | Model spike (round 13, history) | BLOCKED at commit time: no credential; 0 calls; spend USD 0.00; `NOT_RUN` (D032). The operator then ran 6 calls, USD 0.0150 (`docs/MODEL_SPIKE.md`) |
-| Model event path (round 14) | `SPIKED`: Meta SAM 3.1 anchors every 5 s, identity by geometry; clean 10 marks / 0 findings, skipped 9 marks / skip 6 + order 3/4, both matching the key; 78 calls, USD 0.1950; ledger USD 0.2100 of 5.00 (D032, D033) |
+| Model event path (round 14, history) | `SPIKED`: Meta SAM 3.1 anchors every 5 s, identity by geometry; clean 10 marks / 0 findings, skipped 9 marks / skip 6 + order 3/4, both matching the key; 78 calls, USD 0.1950; ledger USD 0.2100 of 5.00 (D032, D033) |
+| Report model status (round 15) | `RUN` on the rebuilt `artifacts/real_clean_05/` (49 anchors, USD 0.1225) and `artifacts/real_skipped_05/` (29 anchors, USD 0.0725); `NOT_RUN` for any log not produced by the model. The identity rule was calibrated on six frames from these same two clips, so the agreement with the key is a demonstration on known footage, not independent validation |
 
 Real media, kept separate from the synthetic figures (never summed or averaged with them).
 Interpreter `<repo>\.venv\Scripts\python.exe`; extractor rule `panel_boxes_rule_v3` (D029 round-8 amendment, D030
@@ -491,4 +507,4 @@ amendment, D031); details in `docs/REAL_MEDIA.md`.
 | `real_panel_v1_clean.mp4` | none: registration refused at frame 1558, ratio 1.97 (10) | not measured; no report (none) | n/a, no report |
 | `real_panel_v1_skipped.mp4` | none: registration refused at frame 1733, ratio 1.93 (9, box 6 absent) | not measured; no report (skip 6 + order 3/4) | n/a, no report |
 
-Perception is frozen (D031). Next task: re-render the film against the model-produced result (round 15).
+Perception is frozen (D031). Next task: the operator records beat 7 from `docs/DEMO_VO.md`, then the film is re-rendered and the submission is checked.

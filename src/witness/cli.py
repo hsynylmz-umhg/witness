@@ -28,6 +28,7 @@ from witness.evidence.manifest import (
     create_session,
     write_report_manifest,
 )
+from witness.model.events import run_status
 from witness.perception.boxes import extract_box_events
 from witness.reports.pdf import render_pdf
 from witness.reports.render import EvidenceImage, render_report
@@ -114,7 +115,10 @@ def _build_report(session_dir: Path, procedure_path: Path, output_dir: Path) -> 
         coverage(events, procedure) + ordering(events, procedure) + undocumented(events, procedure)
     )
     assert_findings_invariants(findings)
-    report_session = {**session_document, "config": config_document}
+    # session.json is the immutable ingest record; the model status is read from what this
+    # session's event log actually came from.
+    model = run_status(session_dir, event_document)
+    report_session = {**session_document, **model, "config": config_document}
     event_records = [event_dict(event) for event in events]
     finding_records = [finding_dict(finding) for finding in findings]
     record_hash = audit_record_hash(report_session, event_records, finding_records)
@@ -144,7 +148,7 @@ def _build_report(session_dir: Path, procedure_path: Path, output_dir: Path) -> 
         "findings": len(findings),
         "record_hash": manifest["record_hash"],
         "report_hash": manifest["report_hash"],
-        "model_integration_status": "NOT_RUN",
+        **model,
     }
 
 

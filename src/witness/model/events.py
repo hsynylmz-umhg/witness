@@ -317,7 +317,39 @@ def extract_model_events(
         "measured": list(layout.part_ids),
         "marked": [event["part_id"] for event in events],
         "ledger_usd": str(_ledger_total(ledger_root)),
-        "model_integration_status": "SPIKED",
+        "model_integration_status": "RUN",
+    }
+
+
+def run_status(session_dir: Path, event_document: Any) -> dict[str, Any]:
+    """RUN only when this session's event log came from model output; NOT_RUN otherwise.
+
+    RUN names the model, the anchor count and the summed cost of this session's own spend
+    record. A log that claims the model without the sidecar and a completed spend record for
+    every anchor is inconsistent and raises; it is never reported either way by guesswork.
+    """
+    producer = event_document.get("producer") if isinstance(event_document, Mapping) else None
+    if producer != RULE:
+        return {"model_integration_status": "NOT_RUN"}
+    try:
+        sidecar = json.loads((session_dir / "model_marks.json").read_text(encoding="utf-8"))
+        spend_path = session_dir / "model" / f"spend-{session_dir.name}" / "spend.json"
+        rows = json.loads(spend_path.read_text(encoding="utf-8"))["requests"]
+        model, anchors = sidecar["model"], int(sidecar["calls"])
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise WitnessError(
+            "A model-produced event log lacks its sidecar or spend record."
+        ) from error
+    if anchors != len(sidecar["anchors"]) or len(rows) != anchors:
+        raise WitnessError("Model anchors, sidecar and spend record disagree.")
+    if any(row["status"] != "completed" or row["model"] != model for row in rows):
+        raise WitnessError("A model anchor in the spend record is not a completed call.")
+    cost = sum((Decimal(row["actual_usd"]) for row in rows), Decimal(0))
+    return {
+        "model_integration_status": "RUN",
+        "model": model,
+        "model_anchors": anchors,
+        "model_cost_usd": str(cost),
     }
 
 

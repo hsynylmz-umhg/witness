@@ -115,3 +115,55 @@ def test_SYNTHETIC_empty_event_log_is_a_recorded_state_and_builds(tmp_path, caps
     rows = findings["findings"] if isinstance(findings, dict) else findings
     assert {row["kind"] for row in rows} == {"skipped"}
     assert (output / "report.html").is_file()
+
+
+def test_SYNTHETIC_hand_supplied_log_reports_not_run(tmp_path, capsys):
+    session, output = _bare_session(tmp_path), tmp_path / "report"
+    (session / "events.json").write_text('{"events": []}', encoding="utf-8")
+    assert _build(session, output) == 0
+    assert json.loads(capsys.readouterr().out)["model_integration_status"] == "NOT_RUN"
+    assert "&quot;model_integration_status&quot;: &quot;NOT_RUN&quot;" in (
+        output / "report.html"
+    ).read_text(encoding="utf-8")
+
+
+def _model_session(tmp_path, anchors=3):
+    session = _bare_session(tmp_path)
+    events = [
+        {"event_id": f"event-{n}", "part_id": f"BOX_{n:02d}", "observed_order": n,
+         "status": "witnessed"}
+        for n in range(1, 11)
+    ]  # fmt: skip
+    (session / "events.json").write_text(
+        json.dumps({"producer": "model_anchor_rule_v1", "events": events}), encoding="utf-8"
+    )
+    (session / "model_marks.json").write_text(
+        json.dumps({"model": "sam-3.1", "calls": anchors, "anchors": [{}] * anchors}),
+        encoding="utf-8",
+    )
+    spend = session / "model" / f"spend-{session.name}"
+    spend.mkdir(parents=True)
+    rows = [{"status": "completed", "model": "sam-3.1", "actual_usd": "0.0025"}] * anchors
+    (spend / "spend.json").write_text(json.dumps({"requests": rows}), encoding="utf-8")
+    return session
+
+
+def test_SYNTHETIC_model_produced_log_reports_run_with_model_anchors_and_cost(tmp_path, capsys):
+    session, output = _model_session(tmp_path), tmp_path / "report"
+    assert _build(session, output) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["model_integration_status"] == "RUN" and result["findings"] == 0
+    assert (result["model"], result["model_anchors"], result["model_cost_usd"]) == (
+        "sam-3.1", 3, "0.0075",
+    )  # fmt: skip
+    report = (output / "report.html").read_text(encoding="utf-8")
+    assert "&quot;model_integration_status&quot;: &quot;RUN&quot;" in report
+    assert "&quot;model_cost_usd&quot;: &quot;0.0075&quot;" in report
+
+
+def test_SYNTHETIC_model_claim_without_its_spend_record_is_refused(tmp_path, capsys):
+    session, output = _model_session(tmp_path), tmp_path / "report"
+    (session / "model" / f"spend-{session.name}" / "spend.json").unlink()
+    assert _build(session, output) == 2
+    assert "spend record" in json.loads(capsys.readouterr().err)["error"]
+    assert not output.exists()

@@ -13,11 +13,11 @@ its source file. Assets are listed in `docs/DEMO_ASSETS.md`.
 | 4 | 1:00–1:25 | 25 | `docs/RISK_GATE.md` table | "The audit logic is gated on 25 cases, and all 25 are synthetic: 10 true positives, 1 false positive, 3 false negatives. That tests the rules, not the real world." | `docs/RISK_GATE.md` |
 | 5 | 1:25–2:05 | 40 | Overlay still, then both real reports next to the key | "Then we tried producing the event log from real footage, with deterministic geometry and no model. This is the operator's own scene: one sheet, one angle, one lighting condition. On the clean clip the extractor found 9 of 10 marks in the right order and missed box 9 at 1.91 times its baseline. On the skipped clip it recovered the three-four swap but flagged blank box 6, because the sheet slid about 25 pixels under fixed masks." | `docs/REAL_MEDIA.md` (Round 7), `artifacts/overlays/real_clean_02_frame-7224.png` |
 | 6 | 2:05–2:30 | 25 | `docs/REAL_MEDIA.md` Round 8 refusal line | "So we made the masks follow the sheet, and required a clear correlation peak. On both clips the peak fell short, 1.97 and 1.93 against a required 2.0, and the extractor stopped instead of guessing. We did not lower the bar. Perception is frozen, and this disagreement with the key is the measured result." | `docs/REAL_MEDIA.md` (Round 8), `docs/DECISIONS.md` (D030, D031) |
-| 7 | 2:30–2:50 | 20 | `docs/STATUS.md` Current block | "Model integration is NOT_RUN. No paid call was made, spend is zero dollars, and the paid path refuses without an explicit budget." | `docs/STATUS.md` |
+| 7 | 2:30–2:50 | 20 | `docs/REAL_MEDIA.md` Model-produced events table | "Then a Meta segmentation model, sam-3.1, proposed the boxes and geometry named them: 78 anchor calls, 0.195 dollars, and both clips now agree with the key. The naming rule was calibrated on six frames from these same clips, so this is a demonstration, not independent validation." | `docs/REAL_MEDIA.md` (Model-produced events), `docs/MODEL_SPIKE.md` (Round 14), `docs/DECISIONS.md` (D032, D033) |
 | 8 | 2:50–3:00 | 10 | Report header with hashes | "witness: an event log in, evidence-linked findings out, and every miss on the record." | `docs/DECISIONS.md` (D030) |
 
 Total: 180 seconds.
 
-Not said, on purpose: any detection accuracy beyond the two clips, any claim that a Meta model
-or any other model ran, any test count, and any statement about torque, tightening or assembly
+Not said, on purpose: any detection accuracy beyond the two clips, any model claim beyond the
+measured run in beat 7, any test count, and any statement about torque, tightening or assembly
 correctness.

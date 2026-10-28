@@ -13,17 +13,19 @@ chain is recomputed from the output bytes, so anyone holding the files can check
 | Claim | Value | Source |
 |---|---|---|
 | Risk gate | 25 labelled cases: 10 TP, 1 FP, 3 FN | `docs/RISK_GATE.md` |
-| Test suite | 144 passed | `docs/STATUS.md` |
+| Test suite | 147 passed | `docs/STATUS.md` |
 | Hash chain | recomputes from the output bytes | `tests/integration/test_offline_pipeline.py` |
-| Real footage | the extractor refused at registration on both clips: correlation peak ratio 1.97 and 1.93, against a required 2.0 | `docs/REAL_MEDIA.md` |
-| Model integration | `SPIKED`: Meta SAM 3.1 regions, named by geometry, produced event logs matching the key on both clips; 78 calls in round 14, ledger USD 0.2100 | `docs/STATUS.md` |
+| Real footage, deterministic extractor | refused at registration on both clips: correlation peak ratio 1.97 and 1.93, against a required 2.0 | `docs/REAL_MEDIA.md` |
+| Real footage, Meta model | `RUN`: `sam-3.1` regions, named by geometry and judged by the same texture rule, produced event logs matching the key on both clips; 78 calls, USD 0.1950 | `docs/REAL_MEDIA.md` |
 
 ## What is not proven
 
 All 25 risk-gate cases are synthetic. The real footage is one scene, one camera and one lighting
-condition, and on it the pencil-mark extractor disagreed with the answer key: an earlier rule
-missed and invented marks, and the final rule refused rather than guess. Two clips are a
-demonstration, not a generalisation. Nothing here measures torque, tightening quality, assembly
+condition, and on it the deterministic extractor disagreed with the answer key: an earlier rule
+missed and invented marks, and the final rule refused rather than guess. The model path agrees
+with the key on both clips, but its identity rule was calibrated on six frames from these same
+two clips, so that agreement is a demonstration on known footage, not independent validation.
+Two clips are a demonstration, not a generalisation. Nothing here measures torque, tightening quality, assembly
 correctness or flight readiness, and the local hashes are not a signature: without an external
 trust anchor they do not stop someone rewriting the files and the manifest together.
 

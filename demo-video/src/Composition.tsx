@@ -33,7 +33,7 @@ const voice = (beat: number) => `witness/voiceover/beat-${String(beat).padStart(
 
 const parseScript = (text: string): Beat[] =>
   text
-    .split("\n")
+    .split(/\r?\n/)
     .filter((line) => /^\| \d+ \|/.test(line))
     .map((line) => {
       const cells = line.split(" | ").map((cell) => cell.replace(/^\| ?| ?\|$/g, "").trim());
@@ -212,7 +212,14 @@ const Visual: React.FC<{ beat: Beat }> = ({ beat }) => {
     case 6:
       return <Excerpt beat={beat.number} file="REAL_MEDIA.md" parts={[["## Round 8 measurement", 20], ["| clean | 10 marks, no findings | none", 2]]} label="docs/REAL_MEDIA.md — Round 8" />;
     case 7:
-      return <Excerpt beat={beat.number} file="STATUS.md" parts={[["## Current", 26]]} label="docs/STATUS.md — Current" />;
+      return (
+        <Excerpt
+          beat={beat.number}
+          file="REAL_MEDIA.md"
+          parts={[["## Model-produced events", 1], ["| Clip | Session | Anchors", 4], ["Reports: ", 4]]}
+          label="docs/REAL_MEDIA.md — Model-produced events"
+        />
+      );
     default:
       return <Page file="clean_report.html" label="artifacts/real_clean_02/report.html" />;
   }

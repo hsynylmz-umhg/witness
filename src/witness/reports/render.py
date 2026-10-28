@@ -54,6 +54,11 @@ def render_report(
         "created_at_utc": session.get("created_at_utc", "unknown"),
         "frame_count": video.get("decoded_frame_count", "unknown"),
         "sampling_fps": media.get("candidate_sample_fps", "unknown"),
+        **{
+            key: session[key]
+            for key in ("model_integration_status", "model", "model_anchors", "model_cost_usd")
+            if key in session
+        },
     }
     rows = (
         "".join(
