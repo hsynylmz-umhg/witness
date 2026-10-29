@@ -8,6 +8,14 @@ measured demonstration, misses included. The `_02` assets come from rule v2 (tag
 The round-8 `_03` reports were built over an absent event log after rule v3 refused both clips;
 they were deleted in round 9 and `build` now refuses a session without `events.json`.
 
+## Retiming (round 16)
+
+The rendered cut `demo-video/out/witness_demo_v4.mp4` runs **181.60 s, 5448 frames**: beat 7's slot
+was widened from 20 s to 21.60 s so its 21.54 s narration is never cut, and the other seven slots
+are unchanged. The film submitted to judges is a separate file, retimed from this cut to
+**180.00 s**. The file a judge watches is therefore not the file in `out/`, and the two durations
+are expected to differ by 1.60 s; neither number is an error.
+
 | Asset | Path | What it shows |
 |---|---|---|
 | Bolt B-roll (intended use case) | `data/raw/demo_bolts_v1_clean.mp4`, source 0-8 s; `data/raw/demo_bolts_v2_skipped.mp4` is filed but not in the film | Beat 1 of `witness_demo_v2.mp4`: a driver turning screw 1 of a numbered row, no clip audio, with "intended use case — not a measurement" burned in for the whole segment. Intended use case, not a measurement: no procedure, extraction or findings exist for these clips |

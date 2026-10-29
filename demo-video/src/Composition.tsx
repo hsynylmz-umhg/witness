@@ -19,6 +19,9 @@ import {
 // docs/DEMO_SCRIPT.md is the source of truth: beats, durations and spoken text are parsed from
 // it at render time, so the on-screen words cannot drift from the script.
 const FPS = 30;
+// Beat 7 is widened to 21.60 s so its narration is never cut (round 16); retimed to 180 s for submission.
+const TOTAL_FRAMES = 5448;
+const frames = (seconds: number) => Math.round(seconds * FPS);
 const SCRIPT = staticFile("witness/DEMO_SCRIPT.md");
 
 type Beat = { number: number; seconds: number; onScreen: string; spoken: string; sources: string };
@@ -48,9 +51,9 @@ const parseScript = (text: string): Beat[] =>
 
 const calculateMetadata: CalculateMetadataFunction<Props> = async () => {
   const beats = parseScript(await (await fetch(SCRIPT)).text());
-  const total = beats.reduce((sum, beat) => sum + beat.seconds, 0);
-  if (beats.length !== 8 || total !== 180) {
-    throw new Error(`DEMO_SCRIPT.md parsed to ${beats.length} beats, ${total} s; expected 8, 180 s.`);
+  const total = beats.reduce((sum, beat) => sum + frames(beat.seconds), 0);
+  if (beats.length !== 8 || total !== TOTAL_FRAMES) {
+    throw new Error(`DEMO_SCRIPT.md parsed to ${beats.length} beats, ${total} frames; expected 8, ${TOTAL_FRAMES}.`);
   }
   // Played clip durations, measured by ffprobe in sync-assets.mjs on this render.
   const audio: Record<string, number> = await (await fetch(staticFile("witness/audio.json"))).json();
@@ -61,14 +64,14 @@ const calculateMetadata: CalculateMetadataFunction<Props> = async () => {
       throw new Error(`Beat ${beat.number}: voiceover is ${clip} s, slot is ${beat.seconds} s.`);
     }
   }
-  return { durationInFrames: total * FPS, props: { beats } };
+  return { durationInFrames: total, props: { beats } };
 };
 
 export const MyComposition = () => (
   <Composition
     id="WitnessDemo"
     component={WitnessDemo}
-    durationInFrames={180 * FPS}
+    durationInFrames={TOTAL_FRAMES}
     fps={FPS}
     width={1920}
     height={1080}
@@ -158,7 +161,7 @@ const Excerpt: React.FC<{ beat: number; file: string; parts: [string, number][];
 const BOLTS_FRAMES = 8 * FPS;
 
 const Visual: React.FC<{ beat: Beat }> = ({ beat }) => {
-  const half = (beat.seconds * FPS) / 2;
+  const half = Math.round(frames(beat.seconds) / 2);
   switch (beat.number) {
     case 1:
       return (
@@ -248,9 +251,9 @@ export const WitnessDemo: React.FC<Props> = ({ beats }) => {
     <AbsoluteFill style={{ background: "#0b1220" }}>
       {beats.map((beat) => {
         const start = from;
-        from += beat.seconds * FPS;
+        from += frames(beat.seconds);
         return (
-          <Sequence key={beat.number} from={start} durationInFrames={beat.seconds * FPS}>
+          <Sequence key={beat.number} from={start} durationInFrames={frames(beat.seconds)}>
             <BeatView beat={beat} />
             <Audio src={staticFile(voice(beat.number))} />
           </Sequence>
