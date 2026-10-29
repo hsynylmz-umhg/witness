@@ -19,8 +19,8 @@ import {
 // docs/DEMO_SCRIPT.md is the source of truth: beats, durations and spoken text are parsed from
 // it at render time, so the on-screen words cannot drift from the script.
 const FPS = 30;
-// Beat 7 is widened to 21.60 s so its narration is never cut (round 16); retimed to 180 s for submission.
-const TOTAL_FRAMES = 5448;
+// Beat 7 is widened to 23.60 s from beat 4's silence so no narration is cut (round 17).
+const TOTAL_FRAMES = 5400;
 const frames = (seconds: number) => Math.round(seconds * FPS);
 const SCRIPT = staticFile("witness/DEMO_SCRIPT.md");
 

@@ -8,17 +8,17 @@ measured demonstration, misses included. The `_02` assets come from rule v2 (tag
 The round-8 `_03` reports were built over an absent event log after rule v3 refused both clips;
 they were deleted in round 9 and `build` now refuses a session without `events.json`.
 
-## Retiming (round 16)
+## The submission film (round 17)
 
-The rendered cut `demo-video/out/witness_demo_v4.mp4` runs **181.60 s, 5448 frames**: beat 7's slot
-was widened from 20 s to 21.60 s so its 21.54 s narration is never cut, and the other seven slots
-are unchanged. The film submitted to judges is a separate file, retimed from this cut to
-**180.00 s**. The file a judge watches is therefore not the file in `out/`, and the two durations
-are expected to differ by 1.60 s; neither number is an error.
+`demo-video/out/witness_demo_final.mp4` **is** the submission file: 180.000 s, 5400 frames,
+1920x1080 h264 with AAC audio. It is not retimed or re-encoded after rendering. Beat 4's slot is
+21.40 s and beat 7's 23.60 s, so every narration clip ends at least 2.0 s before its cut
+(`demo-video/public/voiceover/MANIFEST.md`). `witness_demo_v2.mp4` to `witness_demo_v4.mp4` are
+superseded intermediates; the 181.60 s of `v4` is not a figure for the submitted film.
 
 | Asset | Path | What it shows |
 |---|---|---|
-| Bolt B-roll (intended use case) | `data/raw/demo_bolts_v1_clean.mp4`, source 0-8 s; `data/raw/demo_bolts_v2_skipped.mp4` is filed but not in the film | Beat 1 of `witness_demo_v2.mp4`: a driver turning screw 1 of a numbered row, no clip audio, with "intended use case — not a measurement" burned in for the whole segment. Intended use case, not a measurement: no procedure, extraction or findings exist for these clips |
+| Bolt B-roll (intended use case) | `data/raw/demo_bolts_v1_clean.mp4`, source 0-8 s; `data/raw/demo_bolts_v2_skipped.mp4` is filed but not in the film | Beat 1 of `witness_demo_final.mp4`: a driver turning screw 1 of a numbered row, no clip audio, with "intended use case — not a measurement" burned in for the whole segment. Intended use case, not a measurement: no procedure, extraction or findings exist for these clips |
 | Voiceover | `demo-video/public/voiceover/beat-01.mp3` to `beat-08.mp3`, `MANIFEST.md` | One clip per beat, loudness-normalised at render time (loudnorm, -16 LUFS integrated) with 100 ms fades; each starts at its beat's first frame |
 | Source clips | `data/raw/real_panel_v1_clean.mp4`, `data/raw/real_panel_v1_skipped.mp4` | The permitted mock panel being marked, one clean run and one with a skip and a swap |
 | Answer key | `docs/REAL_MEDIA.md` (sections up to "Measured files") | The expected outcome, committed before any measurement |

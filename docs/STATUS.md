@@ -483,7 +483,7 @@ configured), and an "open right now" section that carried test counts outside th
 
 ## Current
 
-Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 15.
+Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 17.
 `pytest -q` is the only command that produces the suite numbers.
 
 | Check | Result |
@@ -497,6 +497,7 @@ Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 15.
 | Model spike (round 13, history) | BLOCKED at commit time: no credential; 0 calls; spend USD 0.00; `NOT_RUN` (D032). The operator then ran 6 calls, USD 0.0150 (`docs/MODEL_SPIKE.md`) |
 | Model event path (round 14, history) | `SPIKED`: Meta SAM 3.1 anchors every 5 s, identity by geometry; clean 10 marks / 0 findings, skipped 9 marks / skip 6 + order 3/4, both matching the key; 78 calls, USD 0.1950; ledger USD 0.2100 of 5.00 (D032, D033) |
 | Report model status (round 15) | `RUN` on the rebuilt `artifacts/real_clean_05/` (49 anchors, USD 0.1225) and `artifacts/real_skipped_05/` (29 anchors, USD 0.0725); `NOT_RUN` for any log not produced by the model. The identity rule was calibrated on six frames from these same two clips, so the agreement with the key is a demonstration on known footage, not independent validation |
+| Demo film (round 17) | `demo-video/out/witness_demo_final.mp4` is the submission file: 180.000 s, 5400 frames, h264 1920x1080, AAC 180.011 s. Beat 4 slot 21.40 s, beat 7 23.60 s; minimum narration slack 2.03 s (beat 1). `v2`–`v4` are superseded |
 
 Real media, kept separate from the synthetic figures (never summed or averaged with them).
 Interpreter `<repo>\.venv\Scripts\python.exe`; extractor rule `panel_boxes_rule_v3` (D029 round-8 amendment, D030
@@ -507,4 +508,4 @@ amendment, D031); details in `docs/REAL_MEDIA.md`.
 | `real_panel_v1_clean.mp4` | none: registration refused at frame 1558, ratio 1.97 (10) | not measured; no report (none) | n/a, no report |
 | `real_panel_v1_skipped.mp4` | none: registration refused at frame 1733, ratio 1.93 (9, box 6 absent) | not measured; no report (skip 6 + order 3/4) | n/a, no report |
 
-Perception is frozen (D031). Next task: the operator records beat 7 from `docs/DEMO_VO.md`, then the film is re-rendered and the submission is checked.
+Perception is frozen (D031). Next task: submission — public repo, video upload, form.
