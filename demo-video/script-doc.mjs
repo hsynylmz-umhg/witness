@@ -31,8 +31,8 @@ number names its source. Assets are listed in \`docs/DEMO_ASSETS.md\`.
 ${rows.join("\n")}
 
 Total: ${(TOTAL_FRAMES / FPS).toFixed(3)} seconds, ${TOTAL_FRAMES} frames at ${FPS} fps. Each slot is its
-clip plus a 2.000 s breath, rounded up to a frame, except the designed hold of beat 4 and the freeze of
-beat 6.
+clip plus a 1.400 s breath, rounded up to a frame, except the designed hold of beat 4 (3.600 s) and
+the freeze of beat 6 (2.400 s).
 
 Not said, on purpose: any detection accuracy beyond the two clips, any model claim beyond the
 measured run in beat 7, any test count, and any statement about torque, tightening or assembly

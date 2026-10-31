@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, Audio, CalculateMetadataFunction, Composition, Sequence, staticFile, useCurrentFrame } from "remotion";
-import { BEATS, BREATH_S, CAVEAT, FPS, TOTAL_FRAMES, startOf } from "./beats";
+import { BEATS, BREATH_S, CAVEAT, FPS, HOLDS, OCCUPANTS, TOTAL_FRAMES, assertOccupants, startOf } from "./beats";
 import { Arc, Joint, MarkGeometry, Rod } from "./Mark";
 import { Film, FilmData } from "./Scenes";
 import { color, layout } from "./theme";
@@ -11,9 +11,6 @@ type Props = { data: FilmData | null };
 
 // sync-assets.mjs masks the repository and home paths; any user path left in a drawn string fails the render.
 const LEAK = /[A-Za-z]:(\\\\|\\|\/)Users(\\\\|\\|\/)/;
-
-const sha256 = async (bytes: Uint8Array): Promise<string> =>
-  Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), (b) => (b < 16 ? "0" : "") + b.toString(16)).join("");
 
 const voice = (n: number) => `witness/voiceover/beat-${n < 10 ? "0" : ""}${n}.wav`;
 
@@ -91,6 +88,7 @@ const calculateMetadata: CalculateMetadataFunction<Props> = async () => {
     data.findings.map((x) => `${x.kind} ${x.part} ${x.message}`),
   );
   drawn[3] = drawn[3].concat([data.hashes.record, data.hashes.report, data.hashes.manifest, data.hashes.input]);
+  for (const [, o] of OCCUPANTS) if (o.kind !== "empty") drawn[1].push(o.caption);
   drawn[7].push(CAVEAT);
   drawn[8].push(CAVEAT);
   for (const beat of BEATS) {
@@ -98,13 +96,14 @@ const calculateMetadata: CalculateMetadataFunction<Props> = async () => {
       throw new Error(`Beat ${beat.number} would draw an absolute user path.`);
     }
   }
-  // Guard 2, audio: each played clip, measured by ffprobe in sync-assets.mjs, fits its slot with the
-  // 2.000 s breath (beats 4 and 6 hold far longer by design).
+  // Guard 2, audio: each played clip, measured by ffprobe in sync-assets.mjs, fits its slot with a
+  // 1.400 s breath; the designed hold and freeze (beats 4 and 6) need only to hold their clip.
   for (const beat of BEATS) {
     const clip = audio[String(beat.number)];
     const slot = beat.frames / FPS;
-    if (clip === undefined || clip + BREATH_S > slot) {
-      throw new Error(`Beat ${beat.number}: voiceover is ${clip} s, slot is ${slot.toFixed(3)} s; it needs at least ${(clip + BREATH_S).toFixed(3)} s.`);
+    const needed = clip + (HOLDS[beat.number] ? 0 : BREATH_S);
+    if (clip === undefined || slot < needed) {
+      throw new Error(`Beat ${beat.number}: voiceover is ${clip} s, slot is ${slot.toFixed(3)} s; it needs at least ${needed.toFixed(3)} s.`);
     }
   }
   // The subtitles are the narration, word for word.
@@ -113,7 +112,7 @@ const calculateMetadata: CalculateMetadataFunction<Props> = async () => {
       throw new Error(`Beat ${beat.number}: the subtitle cues are not the narration word for word.`);
     }
   }
-  // The slots fill exactly 4914 frames.
+  // The slots fill exactly 4565 frames, and the artefact frame has one occupant at every frame.
   const total = BEATS.reduce((sum, beat) => sum + beat.frames, 0);
   if (BEATS.length !== 8 || total !== TOTAL_FRAMES) {
     throw new Error(`The beats fill ${total} frames in ${BEATS.length} beats; expected 8 beats and ${TOTAL_FRAMES} frames.`);
@@ -124,15 +123,10 @@ const calculateMetadata: CalculateMetadataFunction<Props> = async () => {
   }
   const shape = (m: MarkGeometry) => JSON.stringify([m.rods, m.joints]);
   if (shape(full) !== shape(mono)) throw new Error("The mono mark's geometry differs from the full mark's.");
-  // The report shown in beat 3 belongs to the run whose hashes are drawn above it.
-  const page = new Uint8Array(await (await fetch(staticFile("witness/report.html"))).arrayBuffer());
-  const record = new TextEncoder().encode(data.hashes.record);
-  const joined = new Uint8Array(record.length + page.length);
-  joined.set(record, 0);
-  joined.set(page, record.length);
-  const listed = (manifest.artifacts as { path: string; sha256: string }[]).filter((a) => a.path === "report.html")[0];
-  if ((await sha256(joined)) !== data.hashes.report || !listed || (await sha256(page)) !== listed.sha256) {
-    throw new Error("Beat 3 would show a report.html that does not belong to the manifest drawn above it.");
+  assertOccupants();
+  const first = data.events.filter((e) => e.order === 1)[0];
+  if (!first || first.part !== "BOX_01" || first.evidence !== "evidence-1") {
+    throw new Error("The still's caption names still 1 and BOX_01, which the event log no longer says.");
   }
 
   return { durationInFrames: TOTAL_FRAMES, props: { data } };

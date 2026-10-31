@@ -9,7 +9,6 @@
 //   loudness-normalises it (loudnorm, -16 LUFS) with 100 ms fades and records the played durations
 //   in audio.json. The slot guard runs in the composition, against src/beats.ts.
 import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -54,22 +53,6 @@ for (const [name, source] of Object.entries(text)) {
   writeFileSync(join(out, name), body);
   console.log(`${source} -> public/witness/${name} (masked)`);
 }
-// Beat 3 shows this report beside the hashes of the same run, so it is copied byte for byte and only
-// if it is the file the manifest lists and the file report_hash was computed over.
-const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
-const report = readFileSync(join(root, REPORT, "report.html"));
-const run = JSON.parse(readFileSync(join(root, REPORT, "manifest.json"), "utf8"));
-const listed = run.artifacts.find((artifact) => artifact.path === "report.html");
-if (
-  !listed ||
-  sha(report) !== listed.sha256 ||
-  sha(Buffer.concat([Buffer.from(run.record_hash, "ascii"), report])) !== run.report_hash
-) {
-  fail(`${REPORT}/report.html does not belong to ${REPORT}/manifest.json.`);
-}
-if (LEAK.test(report.toString("utf8"))) fail(`Absolute user path in ${REPORT}/report.html.`);
-writeFileSync(join(out, "report.html"), report);
-console.log(`${REPORT}/report.html -> public/witness/report.html (verified against its manifest)`);
 for (const [name, source] of Object.entries(binary)) {
   writeFileSync(join(out, name), readFileSync(join(root, source)));
   console.log(`${source} -> public/witness/${name}`);

@@ -17,5 +17,5 @@ clips, so this is a demonstration, not independent validation.
 The limit: all 25 risk-gate cases are synthetic, and the only real footage is two clips of one
 scene.
 
-Look first at the risk-gate table in `docs/RISK_GATE.md`, then at `docs/REAL_MEDIA.md`, where
-every real-footage number sits next to the key it was measured against.
+The film runs 152.2 s. Then read `docs/RISK_GATE.md` and `docs/REAL_MEDIA.md`, where every
+real-footage number sits beside the key it was measured against.

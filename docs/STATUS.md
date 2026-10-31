@@ -573,9 +573,65 @@ configured), and an "open right now" section that carried test counts outside th
   watched end to end.
 - Next task: the operator watches the film, then pushes and submits.
 
+## Round 20 — the r20 cut: 4565 frames, one occupant per artefact frame
+
+- Rule: every name written on screen resolves in the pushed repository; anything that does not ship is
+  described, not named. Six names left the screen (the two `real_skipped_05` source paths, the bolt
+  file, the still file, the two overlay files); the four `docs/` names stay.
+- Time base: each slot is its clip plus a 1.400 s breath, rounded up to a frame; beat 4's hold breathes
+  3.600 s and beat 6's freeze 2.400 s: 432, 602, 553, 498, 915, 653, 689, 223 = 4565 frames, 152.167 s.
+  Silence is 14.57 s: 6.04 s in the two designed holds and 8.53 s in six breaths of about 1.4 s.
+- Artefact frame: one occupant at every frame, from `occupantAt(frame)` in `beats.ts`; the composition
+  walks all 4565 frames before rendering. Footage (station footage) 138–377, still 1 (station still)
+  396–1093, clean overlay 3653–3827 and skipped overlay 3828–4401 (station crop), empty elsewhere;
+  changes at 138, 378, 396, 1094, 3653, 3828, 4402, the closest 18 frames apart.
+- Report crop removed: its table text is 16 px Arial (cap height 0.716 em) at the crop's 0.5 scale, a
+  5.7 px cap height against the 14 px rule, and the frame cannot hold the findings rows at the needed
+  1.22 scale. Beat 3 quotes the skipped finding in the film's type instead; the render-time iframe
+  measurement and its hold are deleted, so the twelve-frame crop comparison does not apply.
+- Subtitle band 864–960, 120 px clear below it; the lowest subtitle pixel over 305 samples is y 951
+  (highest 911). Seven cues corrected to the spoken words: the colons the voice does not speak (beats
+  1, 2, 3, 4, 5, 7, 8) became the comma or full stop it does; no word changed. Each cue after the first
+  starts at its first word's start in the rendered audio (faster-whisper large-v3-turbo).
+- Opening: the question types on over 40 frames from 0.4 s; the first cue is up from frame 0; the bolt
+  footage still runs 4.6 to 12.6 s. The opening mark's drawn height is one type step up, 120 px (xl, a
+  157 px box); its draw-on is 10 frames, from 6, to keep the speed. Rod stroke to box is 50.6/1024, 4.9%.
+- Silence map (Whisper on the rendered audio, gaps over 1.2 s):
+
+| Gap | Seconds | What happens in it | Verdict |
+|---|---:|---|---|
+| 12.64–14.04 | 1.40 | footage cut at 12.6, its frame concealed (reveal); still 1 arrives 13.2 (reveal); log parts 13.8 (reveal) | covered |
+| 32.72–34.20 | 1.48 | the chain's three points draw on at 33.87 (drawOn) | covered |
+| 51.12–52.56 | 1.44 | the four baseline ticks arrive at 52.30 (reveal) | covered |
+| 65.60–69.28 | 3.68 | beat 4's figures held still | designed hold |
+| 98.24–99.72 | 1.48 | the chart frame opens from the cause outline at 99.40 (reveal, step) | covered |
+| 119.00–121.62 | 2.62 | beat 6 frozen | designed freeze |
+| 143.00–144.48 | 1.48 | beat 7's statement row leaves from 144.13 (reveal) | covered |
+| 150.40–152.17 | 1.77 | the slow closing rule draws on to 152.03 (drawOn) | covered |
+
+- Cue check against the same transcript: 13 of 14 cue boundaries fall between words. At 112.52 s the
+  beat 6 boundary sits between two frames; the cue starts on frame 3375 (112.500 s), before "We", so
+  the previous cue ends 0.02 s before Whisper's end of "guessing.", under one frame.
+- Still audit (305 samples): no sample below 1.0 % in 1.0 to 151.0 s; the thirteen lowest (1.53 to
+  1.91 %) are beat 3's record hash alone before the report hash (37.0, 37.5 s), beat 4's 25 alone before
+  10 (55.0 to 58.5 s) and 25 and 10 before 1 (59.0, 59.5 s), and the opening question mid-write (1.0 s).
+  Boundaries 7 of 7 pass the step-or-trough test; the longest byte-identical run is 1.0 s.
+- Guards, tripped on the real code and restored with an empty `diff`: audio (beat 1 shortened by 30
+  frames: "Beat 1: voiceover is 12.968345 s, slot is 13.400 s; it needs at least 14.368 s.", exit 1) and
+  path (`C:/Users/planted/notes.txt` in beat 3: "Beat 3 would draw an absolute user path.", exit 1).
+- ffprobe on `witness_demo_final.mp4`: h264 1920x1080, 4565 frames, 152.167 s; AAC 152.171 s. The r19 cut
+  is kept as `witness_demo_r19.mp4`. C: had 0.33 GB free, so the render ran with TEMP on `D:	emp`.
+- The two logo files had been replaced in the working tree by an SVG wrapping a remote raster; they were
+  restored from HEAD on the operator's instruction and `git diff --stat` on both paths is empty.
+- Commands: `pytest -q` 147 passed; `-m "not ffmpeg"` 140 passed, 7 deselected; risk gate exit 0, TP=10,
+  FP=1, FN=3; ruff check and format pass; validator exit 0; `npx tsc --noEmit` exit 0.
+- Unverified: the film was checked through 305 sampled stills, seven inspected stills, the Whisper
+  silence map and the guards, not watched end to end.
+- Next task: the operator watches the film, then pushes and submits.
+
 ## Current
 
-Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 19.
+Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 20.
 `pytest -q` is the only command that produces the suite numbers.
 
 | Check | Result |
@@ -591,7 +647,8 @@ Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 19.
 | Report model status (round 15) | `RUN` on the rebuilt `artifacts/real_clean_05/` (49 anchors, USD 0.1225) and `artifacts/real_skipped_05/` (29 anchors, USD 0.0725); `NOT_RUN` for any log not produced by the model. The identity rule was calibrated on six frames from these same two clips, so the agreement with the key is a demonstration on known footage, not independent validation |
 | Demo film (round 17, history) | kept as `demo-video/out/witness_demo_r17.mp4`, the fallback: 180.000 s, 5400 frames, h264 1920x1080, AAC 180.011 s. Beat 4 slot 21.40 s, beat 7 23.60 s; minimum narration slack 2.03 s (beat 1). `v2`–`v4` are superseded |
 | Demo film (round 18, history) | kept as `demo-video/out/witness_demo_r18.mp4`, rebuilt as a designed object: 180.000 s, 5400 frames, h264 1920x1080, AAC 180.011 s. Narration, slots and figures as in round 17; current artefacts only; guards tripped and reverted |
-| Demo film (round 19) | `demo-video/out/witness_demo_final.mp4` is the submission file: 163.800 s, 4914 frames, h264 1920x1080, AAC 163.819 s. Slots 450 · 620 · 571 · 642 · 933 · 750 · 707 · 241; one spine across all eight beats; 6 of 7 boundaries above the emptying floor (6→7 is the frozen beat 6 beside the overlay); guards tripped and reverted |
+| Demo film (round 19, history) | kept as `demo-video/out/witness_demo_r19.mp4`: 163.800 s, 4914 frames, h264 1920x1080, AAC 163.819 s. Slots 450 · 620 · 571 · 642 · 933 · 750 · 707 · 241; one spine across all eight beats; 6 of 7 boundaries above the emptying floor (6→7 is the frozen beat 6 beside the overlay); guards tripped and reverted |
+| Demo film (round 20) | `demo-video/out/witness_demo_final.mp4` is the submission file: 152.167 s, 4565 frames, h264 1920x1080, AAC 152.171 s. Slots 432 · 602 · 553 · 498 · 915 · 653 · 689 · 223; one occupant per artefact frame; 7 of 7 boundaries pass; every on-screen name resolves in the pushed repo; guards tripped and reverted |
 
 Real media, kept separate from the synthetic figures (never summed or averaged with them).
 Interpreter `<repo>\.venv\Scripts\python.exe`; extractor rule `panel_boxes_rule_v3` (D029 round-8 amendment, D030

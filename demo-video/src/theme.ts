@@ -1,7 +1,7 @@
 import { Easing } from "remotion";
 
 /*
- * The film's only source of colour, size, radius, easing and duration (round 19). Nothing under
+ * The film's only source of colour, size, radius, easing and duration (round 20). Nothing under
  * demo-video/src outside this file writes a literal colour or a pixel unit.
  *
  * Palette, Q1 "forensic dark". The ramp is the mark's own gradient, measured from the operator's
@@ -43,7 +43,6 @@ export const color = {
   verified: "#4BC08A",
   rejected: "#E7A33E",
   band: "rgba(5, 11, 26, 0.72)",
-  report: "#FFFFFF",
   clear: "transparent",
 };
 
@@ -77,7 +76,9 @@ export const frames = {
   outline: 30,
   threshold: 30,
   bars: 54,
-  markSmall: 6,
+  // The opening mark is one type step taller in round 20; its draw-on grows with its path to keep the speed.
+  markSmall: 10,
+  question: 40,
   markLarge: 60,
 };
 
@@ -113,15 +114,23 @@ export const layout = {
   right: W - M,
   top: M,
   sourceY: 32,
-  band: { h: 112, textW: 1344 },
-  caveat: { x: M, w: 480, bottom: 944 },
+  // The band clears every player's progress bar: 120 px below it, its lowest text near y 950.
+  band: { top: 864, h: 96, textW: 1344 },
+  caveat: { x: M, w: 640, bottom: 848 },
+  // The artefact frame's three stations; a station's rectangle never changes with its occupant.
+  stations: {
+    footage: { x: 610, y: 352, w: 700, h: 415 },
+    still: { x: M, y: 528, w: 420, h: 257 },
+    crop: { x: M, y: 344, w: W - 2 * M, h: 344 },
+  },
   artefact: { tick: 24, captionGap: space.s1 },
-  b1: { markSize: 96, markY: M, lineY: 200, frame: { x: 530, y: 352, w: 859, h: 504 } },
-  b2: { stripLeft: 288, idsY: 272, cellY: 344, evidenceY: 480, still: { x: M, y: 560, w: 528, h: 318 }, checksX: 720, checksY: 568, rowStep: 56, findingsY: 760, findingStep: 120, messageGap: 40 },
-  b3: { points: [336, 960, 1584], labelY: 232, valueY: 344, valueW: 480, formulaY: 432, limitY: 480, anchorY: 520, report: { width: 960, height: 2400, title: ["h1", "h1"], findings: ["h2:nth-of-type(3)", "table"] } },
+  // The mark's drawn height is the xl type step: 120 of the 157 px box (its viewBox spans 784 of 1024).
+  b1: { markSize: 157, markY: 48, lineY: 200 },
+  b2: { stripLeft: 288, idsY: 272, cellY: 344, evidenceY: 480, checksX: 600, checksY: 528, rowStep: 48, findingsY: 680, findingStep: 80, messageGap: 40 },
+  b3: { points: [336, 960, 1584], labelY: 232, valueY: 344, valueW: 480, formulaY: 432, limitY: 480, anchorY: 520, quoteY: 600 },
   b4: { figureY: 168, labelY: 352, caveatY: 432, columns: [312, 744, 1176, 1608], tick: 24, columnW: 432 },
-  b5: { scopeY: 192, sceneY: 256, divider: { x: 960, top: 344, bottom: 880 }, colY: 344, clean: M, skipped: 1008, colW: 816, foundY: 384, foundLabelY: 528, missedY: 600, ratioY: 656, swapY: 392, blankY: 456, slidY: 552, outline: [1000, 536, 1824, 680] as [number, number, number, number] },
-  b6: { panel: [M, 344, W - M, 776] as [number, number, number, number], titleY: 192, labelX: 144, barX: 360, barL: 1100, rows: [440, 600], lineBottom: 720, requiredY: 256, requiredW: 240, zeroY: 264, valueX: 1508, stopGap: 40 },
+  b5: { scopeY: 192, sceneY: 256, divider: { x: 960, top: 344, bottom: 800 }, colY: 344, clean: M, skipped: 1008, colW: 816, foundY: 384, foundLabelY: 528, missedY: 600, ratioY: 656, swapY: 392, blankY: 456, slidY: 552, outline: [1000, 536, 1824, 680] as [number, number, number, number] },
+  b6: { panel: [M, 344, W - M, 688] as [number, number, number, number], titleY: 192, labelX: 144, barX: 360, barL: 1100, rows: [424, 568], lineBottom: 648, requiredY: 256, requiredW: 240, zeroY: 264, valueX: 1508, stopGap: 40 },
   b7: { crop: { x: 40, y: 358, w: 1240, h: 283, srcW: 1280, srcH: 720 }, columns: [M, 560, 1056, 1440], labelY: 144, valueY: 184, noteY: 264, columnW: 384 },
   b8: { claimY: 128, claimW: 1440, markSize: 300, markY: 380, ruleY: 712, rule: [480, 1440] as [number, number] },
 };

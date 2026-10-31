@@ -66,4 +66,4 @@ product code.
 
 ## The demo
 
-`witness_demo_final.mp4`, 163.8 s (4914 frames); `docs/DEMO_SCRIPT.md` is its script.
+`witness_demo_final.mp4`, 152.2 s (4565 frames); `docs/DEMO_SCRIPT.md` is its script.

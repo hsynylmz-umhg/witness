@@ -5,21 +5,21 @@ Generated 2026-10-28, corrected 2026-10-28 after measuring with ffprobe. Eight c
 
 | Beat | File | Duration (s) | Slot (s) | Fits |
 |---:|---|---:|---:|:--|
-| 1 | `beat-01.mp3` | 12.97 | 15.000 | yes |
-| 2 | `beat-02.mp3` | 18.65 | 20.667 | yes |
-| 3 | `beat-03.mp3` | 17.02 | 19.033 | yes |
-| 4 | `beat-04.mp3` | 12.97 | 21.400 | yes — designed hold |
-| 5 | `beat-05.mp3` | 29.08 | 31.100 | yes |
-| 6 | `beat-06.mp3` | 19.35 | 25.000 | yes — designed freeze |
-| 7 | `beat-07.mp3` | 21.54 | 23.567 | yes |
-| 8 | `beat-08.mp3` | 6.01 | 8.033 | yes |
+| 1 | `beat-01.mp3` | 12.97 | 14.400 | yes |
+| 2 | `beat-02.mp3` | 18.65 | 20.067 | yes |
+| 3 | `beat-03.mp3` | 17.02 | 18.433 | yes |
+| 4 | `beat-04.mp3` | 12.97 | 16.600 | yes — designed hold |
+| 5 | `beat-05.mp3` | 29.08 | 30.500 | yes |
+| 6 | `beat-06.mp3` | 19.35 | 21.767 | yes — designed freeze |
+| 7 | `beat-07.mp3` | 21.54 | 22.967 | yes |
+| 8 | `beat-08.mp3` | 6.01 | 7.433 | yes |
 
-**Total audio 137.59 s in a 163.80 s cut**, leaving 26.21 s of silence. Of that, 14.08 s is the two
-designed pressure points, beat 4's hold and beat 6's freeze; the other 12.13 s is a breath of about
-two seconds after each of the six other clips. No beat is over its slot and no word is shortened.
+**Total audio 137.59 s in a 152.17 s cut**, leaving 14.57 s of silence. Of that, 6.04 s is the two
+designed pressure points, beat 4's hold and beat 6's freeze; the other 8.53 s is a breath of about
+1.4 s after each of the six other clips. No beat is over its slot and no word is shortened.
 
-Since round 19 the slots are derived in `demo-video/src/beats.ts`: each is its clip plus a 2.000 s
-breath, rounded up to a frame, except beats 4 and 6, which keep their approved 642 and 750 frames. The
+Since round 20 the slots are derived in `demo-video/src/beats.ts`: each is its clip plus a 1.400 s
+breath, rounded up to a frame, except beat 4's hold (3.600 s) and beat 6's freeze (2.400 s). The
 total above is the sum of this table's duration column; quote it from here, nowhere else.
 
 All eight durations were re-measured with `ffprobe` in rounds 16 and 17. Clips 1–6 and 8 had been listed

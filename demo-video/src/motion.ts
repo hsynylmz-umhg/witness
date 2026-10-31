@@ -36,9 +36,9 @@ export const drawOn = (f: number, at: number, length: number, duration: number) 
   strokeDashoffset: length * (1 - progress(f, at, duration, ease.entrance)),
 });
 
-/** How many characters of a text are shown: all of them within frames.typeOn, and never again animated. */
-export const typeOn = (f: number, at: number, text: string): number =>
-  Math.ceil(progress(f, at, frames.typeOn, ease.entrance) * text.length);
+/** How many characters of a text are shown: all of them within `duration`, and never again animated. */
+export const typeOn = (f: number, at: number, text: string, duration: number = frames.typeOn): number =>
+  Math.ceil(progress(f, at, duration, ease.entrance) * text.length);
 
 /** A state changes once, from 0 to 1. With a duration of 0 a stated number lands whole in one frame. */
 export const step = (f: number, at: number, duration: number = frames.state): number =>

@@ -1,13 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   AbsoluteFill,
-  Freeze,
-  IFrame,
   Img,
   OffthreadVideo,
   Sequence,
-  continueRender,
-  delayRender,
   interpolateColors,
   staticFile,
 } from "remotion";
@@ -18,9 +14,14 @@ import {
   CAVEAT,
   LEAD,
   LINGER,
+  OCCUPANTS,
+  Occupant,
+  Station,
+  TOTAL_FRAMES,
   at,
   endOf,
   framesOf,
+  occupantAt,
   startOf,
 } from "./beats";
 import { Mark, MarkGeometry } from "./Mark";
@@ -102,13 +103,10 @@ const Text: React.FC<Type & { children: React.ReactNode }> = ({
 );
 
 // Words without figures type on; anything that states a figure lands whole in one frame.
-const Typed: React.FC<Type & { f: number; from: number; value: string }> = ({
-  f,
-  from,
-  value,
-  ...type
-}) => {
-  const shown = typeOn(f, from, value);
+const Typed: React.FC<
+  Type & { f: number; from: number; value: string; duration?: number }
+> = ({ f, from, value, duration, ...type }) => {
+  const shown = typeOn(f, from, value, duration);
   return (
     <Text {...type}>
       <span>{value.slice(0, shown)}</span>
@@ -198,8 +196,6 @@ const Spine: Scene = ({ f }) => {
 const Opening: Scene = ({ f, data }) => {
   const L = layout.b1;
   const t = text(1);
-  const bolts = when(1, "bolts");
-  const footage = framesOf(BOLTS_S);
   // Just after the boundary the question settles two type steps down and heads the log.
   const settle = step(f, startOf(2) + LEAD);
   return (
@@ -224,6 +220,7 @@ const Opening: Scene = ({ f, data }) => {
             f={f}
             from={when(1, "line")}
             value={t.line}
+            duration={frames.question}
             x={layout.left}
             y={L.lineY}
             w={layout.right - layout.left}
@@ -233,48 +230,6 @@ const Opening: Scene = ({ f, data }) => {
             align="center"
           />
         </Layer>
-      ) : null}
-      {f >= bolts && f < bolts + footage + frames.reveal ? (
-        <Artefact
-          f={f}
-          at={bolts}
-          until={bolts + footage}
-          x={L.frame.x}
-          y={L.frame.y}
-          w={L.frame.w}
-          h={L.frame.h}
-          caption={t.caption}
-          note={t.note}
-        >
-          <Sequence from={bolts} durationInFrames={footage} layout="none">
-            <OffthreadVideo
-              muted
-              src={staticFile("witness/bolts_beat1.mp4")}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                filter: still.filter,
-              }}
-            />
-          </Sequence>
-          {f >= bolts + footage ? (
-            <Sequence from={bolts} layout="none">
-              <Freeze frame={footage - 1}>
-                <OffthreadVideo
-                  muted
-                  src={staticFile("witness/bolts_beat1.mp4")}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    filter: still.filter,
-                  }}
-                />
-              </Freeze>
-            </Sequence>
-          ) : null}
-        </Artefact>
       ) : null}
     </>
   );
@@ -477,102 +432,96 @@ const EventLog: Scene = ({ f, data }) => {
   );
 };
 
-// One crop of the real report page laid out at report.width and scaled to `width`: the band runs from
-// the top of the element `from` to the bottom of `to`, measured inside the loaded page, so the crop
-// follows the report's own layout instead of guessed offsets.
-const ReportStrip: React.FC<{ from: string; to: string; width: number }> = ({
-  from,
-  to,
-  width,
+// The artefact frame: per station one container whose border, ticks and position never change; inside
+// it the single occupant of occupantAt(f), which changes on one declared frame with its caption.
+const runs = OCCUPANTS.reduce<
+  { station: Station; from: number; until: number }[]
+>((list, [from, o], i) => {
+  if (o.kind === "empty") return list;
+  const until = i + 1 < OCCUPANTS.length ? OCCUPANTS[i + 1][0] : TOTAL_FRAMES;
+  const last = list[list.length - 1];
+  if (last && last.station === o.station && last.until === from)
+    last.until = until;
+  else list.push({ station: o.station, from, until });
+  return list;
+}, []);
+
+const Media: React.FC<{ occupant: Occupant; w: number; h: number }> = ({
+  occupant,
+  w,
+  h,
 }) => {
-  const R = layout.b3.report;
-  const scale = width / R.width;
-  const [band, setBand] = useState<[number, number]>([0, 0]);
-  const [handle] = useState(() => delayRender(`report crop ${from}`));
-  const measure = (event: React.SyntheticEvent<HTMLIFrameElement>) => {
-    const doc = event.currentTarget.contentDocument;
-    const a = doc ? doc.querySelector(from) : null;
-    const b = doc ? doc.querySelector(to) : null;
-    if (!a || !b)
-      throw new Error(`report.html has no ${from} or ${to} to crop.`);
-    setBand([
-      a.getBoundingClientRect().top - space.s1,
-      b.getBoundingClientRect().bottom + space.s1,
-    ]);
-    continueRender(handle);
+  const cover: React.CSSProperties = {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    filter: still.filter,
   };
-  return (
-    <div
-      style={{
-        position: "relative",
-        width,
-        height: (band[1] - band[0]) * scale,
-        overflow: "hidden",
-        background: color.report,
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: -band[0] * scale,
-          width: R.width,
-          height: R.height,
-          transform: `scale(${scale})`,
-          transformOrigin: "0 0",
-        }}
+  if (occupant.kind === "footage") {
+    return (
+      <Sequence
+        from={at(1, BEATS[0].at.bolts)}
+        durationInFrames={framesOf(BOLTS_S)}
+        layout="none"
       >
-        <IFrame
-          src={staticFile("witness/report.html")}
-          onLoad={measure}
-          style={{ width: R.width, height: R.height, border: 0 }}
+        <OffthreadVideo
+          muted
+          src={staticFile("witness/bolts_beat1.mp4")}
+          style={cover}
         />
-      </div>
-    </div>
+      </Sequence>
+    );
+  }
+  if (occupant.kind === "still")
+    return <Img src={staticFile("witness/evidence-1.png")} style={cover} />;
+  if (occupant.kind !== "overlay") return null;
+  // The two overlays share one crop, fitted whole inside the station.
+  const c = layout.b7.crop;
+  const scale = Math.min(w / c.w, h / c.h);
+  return (
+    <Img
+      src={staticFile(
+        `witness/model_${occupant.clip}_anchor${occupant.clip === "clean" ? 48 : 28}.png`,
+      )}
+      style={{
+        position: "absolute",
+        left: (w - c.w * scale) / 2 - c.x * scale,
+        top: (h - c.h * scale) / 2 - c.y * scale,
+        width: c.srcW * scale,
+        height: c.srcH * scale,
+        filter: still.filter,
+      }}
+    />
   );
 };
 
-// Matched 2 to 3: the still's frame stays and receives, in place, the report its hashes protect.
-const StillFrame: Scene = ({ f, data }) => {
-  const L = layout.b2.still;
-  const arrive = startOf(2) - 2 * LEAD;
-  const swap = lead(3);
-  if (f < arrive || f >= linger(3) + frames.reveal) return null;
-  const first = data.events.slice().sort((a, b) => a.order - b.order)[0];
-  const width = L.w - 2 * space.s2;
-  const R = layout.b3.report;
+const ArtefactFrame: Scene = ({ f }) => {
+  const run = runs.filter((r) => f >= r.from && f < r.until + frames.reveal)[0];
+  if (!run) return null;
+  const box = layout.stations[run.station];
+  const occupant = occupantAt(f);
+  const inside =
+    occupant.kind !== "empty" && occupant.station === run.station
+      ? occupant
+      : null;
   return (
     <Artefact
       f={f}
-      at={arrive}
-      until={linger(3)}
-      x={L.x}
-      y={L.y}
-      w={L.w}
-      h={L.h}
-      caption={
-        f >= swap
-          ? text(3).crop
-          : `${first.evidence}.png${glyph.sep}${first.part}`
-      }
+      at={run.from}
+      until={run.until}
+      x={box.x}
+      y={box.y}
+      w={box.w}
+      h={box.h}
+      caption={inside ? inside.caption : ""}
+      note={inside && inside.kind === "footage" ? inside.note : undefined}
     >
-      <Img
-        src={staticFile("witness/evidence-1.png")}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          filter: still.filter,
-        }}
-      />
-      {f >= swap ? (
-        <AbsoluteFill
-          style={{ background: color.ground, clipPath: reveal(f, swap) }}
-        >
-          <ReportStrip from={R.title[0]} to={R.title[1]} width={width} />
-          <div style={{ height: space.s1 }} />
-          <ReportStrip from={R.findings[0]} to={R.findings[1]} width={width} />
-        </AbsoluteFill>
+      {inside ? (
+        <Media
+          occupant={inside}
+          w={box.w - 2 * space.s2}
+          h={box.h - 2 * space.s2}
+        />
       ) : null}
     </Artefact>
   );
@@ -700,6 +649,22 @@ const Chain: Scene = ({ f, data }) => {
           colour={color.inkMuted}
           align="center"
         />
+        {data.findings
+          .filter((x) => x.kind === "skipped")
+          .map((x) => (
+            <Stated
+              key={x.part}
+              f={f}
+              from={when(3, "report")}
+              x={layout.left}
+              w={width}
+              y={L.quoteY}
+              align="center"
+            >
+              <Glyph pass={false} />
+              {` ${x.kind}${glyph.sep}${x.part}: “${x.message}”`}
+            </Stated>
+          ))}
       </Layer>
     </>
   );
@@ -928,7 +893,8 @@ const Outline: Scene = ({ f }) => {
   const o = layout.b5.outline;
   const p = layout.b6.panel;
   const from = when(5, "outline");
-  const six = startOf(6);
+  // The chart frame opens LEAD frames before beat 6, inside the breath after beat 5's last word.
+  const six = startOf(6) - LEAD;
   if (f < from || f >= linger(7) + frames.reveal) return null;
   const k = step(f, six, frames.reveal);
   const [x1, y1, x2, y2] = o.map((v, i) => v + (p[i] - v) * k);
@@ -960,7 +926,7 @@ const Outline: Scene = ({ f }) => {
 const Refusal: Scene = ({ f }) => {
   const L = layout.b6;
   const t = text(6);
-  const six = startOf(6);
+  const six = startOf(6) - LEAD;
   const seven = startOf(7);
   if (f < six || f >= linger(6) + frames.reveal) return null;
   const [x1, y1, x2, y2] = L.panel;
@@ -1139,49 +1105,16 @@ const Refusal: Scene = ({ f }) => {
 // above the spine the measured run, each figure landing as it is spoken.
 const Model: Scene = ({ f }) => {
   const L = layout.b7;
-  const P = layout.b6.panel;
   const t = text(7);
   const seven = startOf(7);
   if (f < seven || f >= linger(7) + frames.reveal) return null;
-  const c = L.crop;
-  const scale = (P[2] - P[0] - 2 * space.s2) / c.w;
-  const image: React.CSSProperties = {
-    position: "absolute",
-    left: -c.x * scale,
-    top: -c.y * scale,
-    width: c.srcW * scale,
-    height: c.srcH * scale,
-    filter: still.filter,
-  };
-  const swap = when(7, "skipped");
   // The row above the spine waits for beat 6's labels to leave.
   const clear = linger(6) + frames.reveal;
   const later = (key: string) => Math.max(when(7, key), clear);
   const [c0, c1, c2, c3] = L.columns;
   return (
     <>
-      <Artefact
-        f={f}
-        at={seven}
-        until={linger(7)}
-        x={P[0]}
-        y={P[1]}
-        w={P[2] - P[0]}
-        h={P[3] - P[1]}
-        caption={f >= swap ? t.skipped : t.clean}
-      >
-        <Img
-          src={staticFile("witness/model_clean_anchor48.png")}
-          style={image}
-        />
-        <AbsoluteFill style={{ clipPath: reveal(f, swap) }}>
-          <Img
-            src={staticFile("witness/model_skipped_anchor28.png")}
-            style={image}
-          />
-        </AbsoluteFill>
-      </Artefact>
-      <Layer clip={reveal(f, seven, { until: startOf(8) })}>
+      <Layer clip={reveal(f, seven, { until: lead(8) })}>
         <Typed
           f={f}
           from={later("meta")}
@@ -1347,7 +1280,7 @@ export const Film: Scene = (props) => (
     <Spine {...props} />
     <Opening {...props} />
     <EventLog {...props} />
-    <StillFrame {...props} />
+    <ArtefactFrame {...props} />
     <Chain {...props} />
     <Gate {...props} />
     <Geometry {...props} />

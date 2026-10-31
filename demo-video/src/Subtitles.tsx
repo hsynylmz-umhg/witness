@@ -34,7 +34,7 @@ export const Subtitles: React.FC<{ f: number }> = ({ f }) => {
       style={{
         position: "absolute",
         left: 0,
-        top: layout.h - layout.band.h,
+        top: layout.band.top,
         width: layout.w,
         height: layout.band.h,
         background: color.band,
