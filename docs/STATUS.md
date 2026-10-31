@@ -516,9 +516,66 @@ configured), and an "open right now" section that carried test counts outside th
 - Unverified: the film was checked through twelve frames and the guards, not watched end to end.
 - Next task: the operator watches the film, then pushes and submits.
 
+## Round 19 — the r19 cut: a 4914-frame time base and continuity across every boundary
+
+- Behaviour: the film is re-authored on 4914 frames, 163.800 s. `demo-video/src/beats.ts` derives each
+  slot at load as its clip plus a 2.000 s breath, rounded up to a frame, except beat 4's hold (642) and
+  beat 6's freeze (750): 450, 620, 571, 642, 933, 750, 707, 241. Narration, words, facts and audio bytes
+  are unchanged. Of the 26.2 s of silence, 14.1 s is the two designed holds; the other 12.1 s is a
+  breath of about two seconds after each of the six other clips. Every remaining silence is a designed
+  pressure point or a breath.
+- Continuity: one spine at y = 312 runs from the first frame to the last and changes only weight and
+  colour with its role. Each beat's first object arrives 0.6 s before its boundary and its last object
+  stays 2.0 s past the next one, except during beat 4's hold and beat 6's freeze.
+- Beat 3 holds the same run's `report.html`, cropped to its title and findings and captioned as a crop;
+  `sync-assets.mjs` and the composition both refuse it unless it hashes into the manifest drawn above it.
+  Beat 1's footage is on screen for its full 8.0 s (4.6 to 12.6 s), so its `0–8 s` caption is true. The
+  band carries every word: cues start on each beat's first frame, at no more than 0.72 opacity and
+  settling to 0.5, also under the display type of beats 1 and 8.
+- Ground and mark (6.6a): the ground is `#050B1A`, off the mark's ramp. The closing mark is stroke-only,
+  drawn from the mono geometry with the ramp as a gradient stroke, every joint one ring (width 0.4 of
+  its radius) with the same full #3B80DE rim. The 1.20:1 fill target was withdrawn by the operator.
+- Contrast on `#050B1A`: body 17.86:1, captions 7.79:1, settled subtitle 4.95:1, rim 4.98:1 against the
+  ground and the joint interior.
+
+| Boundary | Time | Carried across | Arrived before | Ink −0.5 / 0 / +0.5 s, floor |
+|---|---:|---|---|---|
+| 1→2 | 15.000 | spine (underline → log header); the question, settling two steps down | the still's frame, the log's parts | 9.51 / 9.32 / 9.65 %, 8.92 % |
+| 2→3 | 35.667 | the still's frame, now holding the report; the log's cells and findings | the chain's three points, the report crop | 14.38 / 12.73 / 13.28 %, 5.59 % |
+| 3→4 | 54.700 | spine (chain baseline → figure baseline); the recompute rule, limit and report | the four baseline ticks | 7.63 / 6.64 / 5.63 %, 2.41 % |
+| 4→5 | 76.100 | the four figures, their labels and the caveat | the spine as section rule (the hold admits nothing new) | 2.48 / 2.17 / 2.83 %, 1.34 % |
+| 5→6 | 107.200 | the cause outline, opening into the chart frame; the scope lines | the outline itself | 4.68 / 4.41 / 8.60 %, 2.97 % |
+| 6→7 | 132.200 | the chart frame, becoming the overlay crop; the chart's labels | the spine (the freeze admits nothing new) | 9.01 / 8.22 / 32.53 %, 10.73 % |
+| 7→8 | 155.767 | the overlay crop and the spine, which becomes the closing rule | the spine as closing rule | 34.55 / 33.63 / 32.75 %, 9.64 % |
+
+- Still audit (328 samples every 0.5 s at 960 px, ink = pixels more than 24 per channel from the
+  ground): no sample below 1.0 % in 1.0 to 162.5 s. The thirteen lowest samples, 1.56 to 1.85 %, are
+  beat 4 with 25 standing alone before 10 is spoken (57.0 to 60.0 s) and with 25 and 10 before 1
+  (60.5 to 61.5 s), beat 5's scope lines before the clean column (87.5 s), and beat 1's mark and question
+  before the bolts (1.0, 4.0 s). The floor is half the mean of the two neighbouring beat plateaus (median
+  ink inside each beat). 6→7 is below its floor: the frame at −0.5 s is beat 6's own frozen plateau
+  (9.01 %) beside beat 7's overlay (33.91 %). It is a density step, not an emptying, and the approved
+  freeze is not moved to pass it.
+- The longest byte-identical run of samples is 7.0 s (67.5 to 74.5 s), inside beat 4's hold; every other
+  run is at most 1.0 s. Beat 6's freeze renders no motion: its decoded frames differ only by encoder
+  noise (2648 scattered pixels, five above a difference of 8).
+- Guards, tripped on the real code and restored with an empty `diff`: audio (beat 4's hold set to 360
+  frames: "Beat 4: voiceover is 12.968345 s, slot is 12.000 s; it needs at least 14.968 s.", exit 1) and
+  path (`C:/Users/planted/notes.txt` in beat 3: "Beat 3 would draw an absolute user path.", exit 1).
+- ffprobe on `witness_demo_final.mp4`: h264 1920x1080, 4914 frames, 163.800 s; AAC 163.819 s. The
+  round-18 cut is kept as `witness_demo_r18.mp4`, beside `witness_demo_r17.mp4`.
+- The committed `beat-07.mp3` was stale from round 14 to round 18 (the 8.95 s round-14 line) while the
+  operator's 21.54 s recording sat unstaged; the film always rendered from the working tree, so the film
+  was correct and the repository was not. Round 19 commits the recording.
+- Commands: `pytest -q` 147 passed; `-m "not ffmpeg"` 140 passed, 7 deselected; risk gate exit 0, TP=10,
+  FP=1, FN=3; ruff check and format pass; validator exit 0; `npx tsc --noEmit` exit 0.
+- Unverified: the film was checked through 328 sampled stills, 48 inspected frames and the guards, not
+  watched end to end.
+- Next task: the operator watches the film, then pushes and submits.
+
 ## Current
 
-Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 18.
+Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 19.
 `pytest -q` is the only command that produces the suite numbers.
 
 | Check | Result |
@@ -533,7 +590,8 @@ Interpreter `<repo>\.venv\Scripts\python.exe`, working tree as of round 18.
 | Model event path (round 14, history) | `SPIKED`: Meta SAM 3.1 anchors every 5 s, identity by geometry; clean 10 marks / 0 findings, skipped 9 marks / skip 6 + order 3/4, both matching the key; 78 calls, USD 0.1950; ledger USD 0.2100 of 5.00 (D032, D033) |
 | Report model status (round 15) | `RUN` on the rebuilt `artifacts/real_clean_05/` (49 anchors, USD 0.1225) and `artifacts/real_skipped_05/` (29 anchors, USD 0.0725); `NOT_RUN` for any log not produced by the model. The identity rule was calibrated on six frames from these same two clips, so the agreement with the key is a demonstration on known footage, not independent validation |
 | Demo film (round 17, history) | kept as `demo-video/out/witness_demo_r17.mp4`, the fallback: 180.000 s, 5400 frames, h264 1920x1080, AAC 180.011 s. Beat 4 slot 21.40 s, beat 7 23.60 s; minimum narration slack 2.03 s (beat 1). `v2`–`v4` are superseded |
-| Demo film (round 18) | `demo-video/out/witness_demo_final.mp4` is the submission file, rebuilt as a designed object: 180.000 s, 5400 frames, h264 1920x1080, AAC 180.011 s. Narration, slots and figures as in round 17; current artefacts only; guards tripped and reverted |
+| Demo film (round 18, history) | kept as `demo-video/out/witness_demo_r18.mp4`, rebuilt as a designed object: 180.000 s, 5400 frames, h264 1920x1080, AAC 180.011 s. Narration, slots and figures as in round 17; current artefacts only; guards tripped and reverted |
+| Demo film (round 19) | `demo-video/out/witness_demo_final.mp4` is the submission file: 163.800 s, 4914 frames, h264 1920x1080, AAC 163.819 s. Slots 450 · 620 · 571 · 642 · 933 · 750 · 707 · 241; one spine across all eight beats; 6 of 7 boundaries above the emptying floor (6→7 is the frozen beat 6 beside the overlay); guards tripped and reverted |
 
 Real media, kept separate from the synthetic figures (never summed or averaged with them).
 Interpreter `<repo>\.venv\Scripts\python.exe`; extractor rule `panel_boxes_rule_v3` (D029 round-8 amendment, D030

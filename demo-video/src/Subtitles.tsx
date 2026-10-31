@@ -1,13 +1,13 @@
 import React from "react";
-import { BEATS, Cue, at, framesOf, startOf } from "./beats";
+import { BEATS, Cue, at, endOf, startOf } from "./beats";
 import { step, typeOn } from "./motion";
 import { color, font, frames, layout, leading, opacity, size, stroke } from "./theme";
 
-// The cue being spoken at frame f, with its start as a global frame; cues end with their beat.
+// The cue being spoken at frame f, with its start as a global frame; a cue stays until the next one
+// or the end of its beat, so the band is never empty while the narration plays.
 const cueAt = (f: number): (Cue & { from: number }) | null => {
   for (const beat of BEATS) {
-    const start = startOf(beat.number);
-    if (f < start || f >= start + framesOf(beat.seconds)) continue;
+    if (f < startOf(beat.number) || f >= endOf(beat.number)) continue;
     let current: (Cue & { from: number }) | null = null;
     for (const cue of beat.cues) {
       const from = at(beat.number, cue.at);
@@ -19,13 +19,15 @@ const cueAt = (f: number): (Cue & { from: number }) | null => {
 };
 
 // One band across the foot of the frame with an accent hairline for its top edge. Each cue types on
-// within frames.typeOn, then settles to half opacity so the eye returns to the picture. A cue whose
-// words are already set on screen as a display line leaves the band empty.
+// within frames.typeOn at no more than opacity.subtitle, then settles to opacity.settled so the eye
+// returns to the picture. A cue whose words are also set as display type stays at opacity.settled.
 export const Subtitles: React.FC<{ f: number }> = ({ f }) => {
   const cue = cueAt(f);
-  const text = cue && !cue.onScreen ? cue.text : "";
+  const text = cue ? cue.text : "";
   const shown = cue ? typeOn(f, cue.from, text) : 0;
-  const settle = cue ? 1 - (1 - opacity.settled) * step(f, cue.from + frames.typeOn) : 1;
+  const level = !cue || cue.onScreen
+    ? opacity.settled
+    : opacity.subtitle - (opacity.subtitle - opacity.settled) * step(f, cue.from + frames.typeOn);
   const left = (layout.w - layout.band.textW) / 2;
   return (
     <div
@@ -64,7 +66,7 @@ export const Subtitles: React.FC<{ f: number }> = ({ f }) => {
           fontSize: size.sm,
           lineHeight: leading.body,
           color: color.ink,
-          opacity: settle,
+          opacity: level,
         }}
       >
         <span>

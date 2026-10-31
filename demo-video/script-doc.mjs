@@ -2,7 +2,7 @@
 // film is authored. Run with `npm run script-doc` after any change to beats.ts (Node strips the types).
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { BEATS, FPS, TOTAL_FRAMES, framesOf, startOf } from "./src/beats.ts";
+import { BEATS, FPS, TOTAL_FRAMES, endOf, startOf } from "./src/beats.ts";
 
 const clock = (frame) => {
   const seconds = frame / FPS;
@@ -14,8 +14,8 @@ const cell = (value) => value.replaceAll("|", "\\|");
 
 const rows = BEATS.map((beat) => {
   const start = startOf(beat.number);
-  const end = start + framesOf(beat.seconds);
-  return `| ${beat.number} | ${clock(start)}–${clock(end)} | ${beat.seconds} | ${cell(beat.onScreen)} | "${cell(beat.spoken)}" | ${beat.sources.join(", ")} |`;
+  const end = endOf(beat.number);
+  return `| ${beat.number} | ${clock(start)}–${clock(end)} | ${(beat.frames / FPS).toFixed(3)} (${beat.frames}) | ${cell(beat.onScreen)} | "${cell(beat.spoken)}" | ${beat.sources.join(", ")} |`;
 });
 
 const doc = `# Demo script — three minutes
@@ -26,11 +26,13 @@ and D031: witness verifies an event log against a procedure and links every find
 recomputable hash chain. It does not claim to detect pencil marks reliably from pixels. Every spoken
 number names its source. Assets are listed in \`docs/DEMO_ASSETS.md\`.
 
-| # | Time | Seconds | On screen | Spoken | Sources |
+| # | Time | Seconds (frames) | On screen | Spoken | Sources |
 |---|---|---:|---|---|---|
 ${rows.join("\n")}
 
-Total: ${TOTAL_FRAMES / FPS} seconds, ${TOTAL_FRAMES} frames at ${FPS} fps.
+Total: ${(TOTAL_FRAMES / FPS).toFixed(3)} seconds, ${TOTAL_FRAMES} frames at ${FPS} fps. Each slot is its
+clip plus a 2.000 s breath, rounded up to a frame, except the designed hold of beat 4 and the freeze of
+beat 6.
 
 Not said, on purpose: any detection accuracy beyond the two clips, any model claim beyond the
 measured run in beat 7, any test count, and any statement about torque, tightening or assembly

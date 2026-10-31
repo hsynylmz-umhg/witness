@@ -5,22 +5,22 @@ Generated 2026-10-28, corrected 2026-10-28 after measuring with ffprobe. Eight c
 
 | Beat | File | Duration (s) | Slot (s) | Fits |
 |---:|---|---:|---:|:--|
-| 1 | `beat-01.mp3` | 12.97 | 15 | yes |
-| 2 | `beat-02.mp3` | 18.65 | 25 | yes |
-| 3 | `beat-03.mp3` | 17.02 | 20 | yes |
-| 4 | `beat-04.mp3` | 12.97 | 21.40 | yes — 3.60 s of silence moved to beat 7 in round 17 |
-| 5 | `beat-05.mp3` | 29.08 | 40 | yes |
-| 6 | `beat-06.mp3` | 19.35 | 25 | yes |
-| 7 | `beat-07.mp3` | 21.54 | 23.60 | yes — slot widened in rounds 16–17 |
-| 8 | `beat-08.mp3` | 6.01 | 10 | yes |
+| 1 | `beat-01.mp3` | 12.97 | 15.000 | yes |
+| 2 | `beat-02.mp3` | 18.65 | 20.667 | yes |
+| 3 | `beat-03.mp3` | 17.02 | 19.033 | yes |
+| 4 | `beat-04.mp3` | 12.97 | 21.400 | yes — designed hold |
+| 5 | `beat-05.mp3` | 29.08 | 31.100 | yes |
+| 6 | `beat-06.mp3` | 19.35 | 25.000 | yes — designed freeze |
+| 7 | `beat-07.mp3` | 21.54 | 23.567 | yes |
+| 8 | `beat-08.mp3` | 6.01 | 8.033 | yes |
 
-**Total audio 137.59 s in a 180.00 s cut**, leaving 42.41 s of silence distributed across the beats.
-No beat is over its slot, so no script words are shortened.
+**Total audio 137.59 s in a 163.80 s cut**, leaving 26.21 s of silence. Of that, 14.08 s is the two
+designed pressure points, beat 4's hold and beat 6's freeze; the other 12.13 s is a breath of about
+two seconds after each of the six other clips. No beat is over its slot and no word is shortened.
 
-Beat 7 was re-synthesised in round 15 after the script changed. Its slot was widened to 21.60 s in
-round 16 and to 23.60 s in round 17, taking 3.60 s from the silence after beat 4's narration, so every
-clip has at least 2.0 s of slack and the cut is exactly 180.00 s. The total above is the sum of this
-table's duration column; quote it from here, nowhere else.
+Since round 19 the slots are derived in `demo-video/src/beats.ts`: each is its clip plus a 2.000 s
+breath, rounded up to a frame, except beats 4 and 6, which keep their approved 642 and 750 frames. The
+total above is the sum of this table's duration column; quote it from here, nowhere else.
 
 All eight durations were re-measured with `ffprobe` in rounds 16 and 17. Clips 1–6 and 8 had been listed
 from MP3 frame-header counts, 0.06–0.08 s longer than ffprobe reports; the table now carries the

@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, Audio, CalculateMetadataFunction, Composition, Sequence, staticFile, useCurrentFrame } from "remotion";
-import { BEATS, CAVEAT, FPS, TOTAL_FRAMES, framesOf, startOf } from "./beats";
+import { BEATS, BREATH_S, CAVEAT, FPS, TOTAL_FRAMES, startOf } from "./beats";
 import { Arc, Joint, MarkGeometry, Rod } from "./Mark";
 import { Film, FilmData } from "./Scenes";
 import { color, layout } from "./theme";
@@ -11,6 +11,9 @@ type Props = { data: FilmData | null };
 
 // sync-assets.mjs masks the repository and home paths; any user path left in a drawn string fails the render.
 const LEAK = /[A-Za-z]:(\\\\|\\|\/)Users(\\\\|\\|\/)/;
+
+const sha256 = async (bytes: Uint8Array): Promise<string> =>
+  Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), (b) => (b < 16 ? "0" : "") + b.toString(16)).join("");
 
 const voice = (n: number) => `witness/voiceover/beat-${n < 10 ? "0" : ""}${n}.wav`;
 
@@ -95,11 +98,13 @@ const calculateMetadata: CalculateMetadataFunction<Props> = async () => {
       throw new Error(`Beat ${beat.number} would draw an absolute user path.`);
     }
   }
-  // Guard 2, audio: each played clip, measured by ffprobe in sync-assets.mjs, fits its slot.
+  // Guard 2, audio: each played clip, measured by ffprobe in sync-assets.mjs, fits its slot with the
+  // 2.000 s breath (beats 4 and 6 hold far longer by design).
   for (const beat of BEATS) {
     const clip = audio[String(beat.number)];
-    if (clip === undefined || clip > beat.seconds) {
-      throw new Error(`Beat ${beat.number}: voiceover is ${clip} s, slot is ${beat.seconds} s.`);
+    const slot = beat.frames / FPS;
+    if (clip === undefined || clip + BREATH_S > slot) {
+      throw new Error(`Beat ${beat.number}: voiceover is ${clip} s, slot is ${slot.toFixed(3)} s; it needs at least ${(clip + BREATH_S).toFixed(3)} s.`);
     }
   }
   // The subtitles are the narration, word for word.
@@ -108,8 +113,8 @@ const calculateMetadata: CalculateMetadataFunction<Props> = async () => {
       throw new Error(`Beat ${beat.number}: the subtitle cues are not the narration word for word.`);
     }
   }
-  // The frozen slots fill exactly 5400 frames.
-  const total = BEATS.reduce((sum, beat) => sum + framesOf(beat.seconds), 0);
+  // The slots fill exactly 4914 frames.
+  const total = BEATS.reduce((sum, beat) => sum + beat.frames, 0);
   if (BEATS.length !== 8 || total !== TOTAL_FRAMES) {
     throw new Error(`The beats fill ${total} frames in ${BEATS.length} beats; expected 8 beats and ${TOTAL_FRAMES} frames.`);
   }
@@ -119,6 +124,16 @@ const calculateMetadata: CalculateMetadataFunction<Props> = async () => {
   }
   const shape = (m: MarkGeometry) => JSON.stringify([m.rods, m.joints]);
   if (shape(full) !== shape(mono)) throw new Error("The mono mark's geometry differs from the full mark's.");
+  // The report shown in beat 3 belongs to the run whose hashes are drawn above it.
+  const page = new Uint8Array(await (await fetch(staticFile("witness/report.html"))).arrayBuffer());
+  const record = new TextEncoder().encode(data.hashes.record);
+  const joined = new Uint8Array(record.length + page.length);
+  joined.set(record, 0);
+  joined.set(page, record.length);
+  const listed = (manifest.artifacts as { path: string; sha256: string }[]).filter((a) => a.path === "report.html")[0];
+  if ((await sha256(joined)) !== data.hashes.report || !listed || (await sha256(page)) !== listed.sha256) {
+    throw new Error("Beat 3 would show a report.html that does not belong to the manifest drawn above it.");
+  }
 
   return { durationInFrames: TOTAL_FRAMES, props: { data } };
 };
@@ -142,7 +157,7 @@ export const WitnessDemo: React.FC<Props> = ({ data }) => {
     <AbsoluteFill style={{ background: color.ground }}>
       {data ? <Film f={f} data={data} /> : null}
       {BEATS.map((beat) => (
-        <Sequence key={beat.number} from={startOf(beat.number)} durationInFrames={framesOf(beat.seconds)} layout="none">
+        <Sequence key={beat.number} from={startOf(beat.number)} durationInFrames={beat.frames} layout="none">
           <Audio src={staticFile(voice(beat.number))} />
         </Sequence>
       ))}
