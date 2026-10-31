@@ -24,7 +24,7 @@ entries; both resolve to the same rules, with no duplicated rule body. No extra
 
 Source: workspace-01a0f358-1002-7e47-b7d6-86f6e2f5ff50 (1).zip in the user's Downloads.
 SHA-256: 148b7a22643a67fc8c74deedc6e907eeaa30a396ab65477048df2b6f58e73e5d.
-The original ZIP remains unchanged there. docs/inventory/context-kit.txt lists its
+The original ZIP remains unchanged there. A private inventory of the reference kit (not shipped) lists its
 31 file entries. Its useful idea, small entry points around shared project context,
 was adapted. Generic Next.js/database/UI/deployment guidance, Unix helper scripts,
 blanket permission settings and automatic delegation were not copied. Current

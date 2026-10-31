@@ -1,30 +1,64 @@
+# private
+context/
 .env
 .env.*
 !.env.example
-.venv/
-.cache/
+*.pem
+*.key
 CLAUDE.local.md
-*.response.json
-__pycache__/
-*.py[cod]
-*.egg-info/
-.pytest_cache/
-.tmp/
-.ruff_cache/
-.coverage
-htmlcov/
-build/
-dist/
+
+# raw, generated and scratch
 data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
 artifacts/*
 !artifacts/.gitkeep
+demo-video/out/
+demo-video/public/witness/
+demo-video/public/brand/*.png
+.tmp/
+*.response.json
+
+# build and cache
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+node_modules/
+demo-video/node_modules/
+.pytest_cache/
+.ruff_cache/
+.cache/
+.coverage
+htmlcov/
+build/
+dist/
 *.log
+*.tsbuildinfo
+.remotion/
+demo-video/.remotion/
 
+# media — the brand svgs are text and stay tracked
+*.mp4
+*.mov
+*.pdf
+*.zip
+uploads/
+VIDEO-ANLATIM.html
 
-# Private local context…
-context/
+# editor and OS noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
 
-# Private local context: prompts, references, archived scaffold. Never published.
+# tooling that is not part of the project
+.claude/
+skills/
+
+# round scratch
+*-transcript.md
+
+# private inventory, kept on disk only
+docs/inventory/context-kit.txt

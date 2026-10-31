@@ -1,5 +1,7 @@
 # WITNESS
 
+Licensed under the Apache License, Version 2.0 — see LICENSE.
+
 ## What this is
 
 WITNESS reads an event log of what happened during a fixed-camera assembly procedure and turns
@@ -45,9 +47,16 @@ The first two need no media. The real clips are not in the repository. `ingest` 
 session id, which replaces `SESSION_ID`. `build` refuses a session that has no `events.json`,
 because a missing log is not the same as an empty one.
 
+On macOS and Linux the interpreter is `.venv/bin/python` instead of `.venv/Scripts/python.exe`; the
+commands are otherwise the same. The two real clips under `data/raw/` are the operator's private
+footage and are not shipped. A fresh clone can run the test suite and the risk gate, which are offline
+and synthetic (the ffmpeg-marked tests also need FFmpeg on `PATH`); it cannot run `ingest` or `build` on
+the real clips, and it cannot re-render the demo film, which needs those clips and the local report
+folders under `artifacts/`.
+
 ## Repo map
 
-- `.claude/`: development-only agent skills and their provenance
+- `.claude/`: local development tooling; nothing under it ships (credits in `docs/CREDITS.md`)
 - `artifacts/`: local sessions, reports and overlay stills; git-ignored
 - `config/`: default limits for ingest and sampling
 - `data/`: procedures; `data/raw/` holds local footage and is git-ignored
@@ -60,7 +69,7 @@ because a missing log is not the same as an empty one.
 ## Third-party tools
 
 Three MIT-licensed agent skills (ponytail, hallmark and humanizer) were used while writing this
-code and its documents. They are listed with their sources in `.claude/skills/PROVENANCE.md`.
+code and its documents. They are listed with their sources in `docs/CREDITS.md`.
 They are development aids: none of them runs in the pipeline, and none of their output ships as
 product code.
 
