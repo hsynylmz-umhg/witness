@@ -1,11 +1,13 @@
 // Prepares public/witness/ for the composition. Run by `npm run render` before every render.
-// - Copies the demo's source files (paths from docs/DEMO_ASSETS.md / docs/DEMO_SCRIPT.md),
-//   masking the repository's absolute path as <repo>; the docs themselves are never edited.
-//   Any remaining user path fails the sync with the file name.
-// - Cuts a silent excerpt of the bolt B-roll for beat 1 (the source clip stays in data/raw/).
-// - Re-measures every voiceover clip with ffprobe, fails on drift against MANIFEST.md (> 0.5 s)
-//   or on a clip longer than its beat slot, then loudness-normalises it (loudnorm, -16 LUFS)
-//   with 100 ms fades and records the played durations in audio.json.
+// - Copies the film's data from the current run: the round-15 `_05` skipped-clip report folder, the
+//   event log of the session it was built from, and the panel procedure. Text copies mask the
+//   repository's absolute path as <repo> and the home folder as <home>; any user path left fails the
+//   sync with the file name. The sources themselves are never edited.
+// - Copies the two model overlays and the first evidence still, and cuts the silent 8 s bolt excerpt
+//   for beat 1 (the source clip stays in data/raw/).
+// - Re-measures every voiceover clip with ffprobe, fails on drift against MANIFEST.md (> 0.5 s), then
+//   loudness-normalises it (loudnorm, -16 LUFS) with 100 ms fades and records the played durations
+//   in audio.json. The slot guard runs in the composition, against src/beats.ts.
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -20,18 +22,19 @@ const fail = (message) => {
   process.exit(1);
 };
 
+const SESSION = "artifacts/sessions/58bb85e4-77eb-4297-882a-aac467a05bca";
+const REPORT = "artifacts/real_skipped_05";
 const text = {
-  "DEMO_SCRIPT.md": "docs/DEMO_SCRIPT.md",
-  "RISK_GATE.md": "docs/RISK_GATE.md",
-  "REAL_MEDIA.md": "docs/REAL_MEDIA.md",
-  "STATUS.md": "docs/STATUS.md",
-  "clean_report.html": "artifacts/real_clean_02/report.html",
-  "skipped_report.html": "artifacts/real_skipped_02/report.html",
-  "clean_manifest.json": "artifacts/real_clean_02/manifest.json",
+  "procedure.json": "data/procedures/panel_boxes_v1.json",
+  "events.json": `${SESSION}/events.json`,
+  "findings.json": `${REPORT}/findings.json`,
+  "manifest.json": `${REPORT}/manifest.json`,
+  "manifest.sha256": `${REPORT}/manifest.sha256`,
 };
 const binary = {
-  "clean_evidence-1.png": "artifacts/real_clean_02/evidence/evidence-1.png",
-  "overlay.png": "artifacts/overlays/real_clean_02_frame-7224.png",
+  "evidence-1.png": `${SESSION}/evidence/evidence-1.png`,
+  "model_clean_anchor48.png": "artifacts/overlays/model_clean_anchor48.png",
+  "model_skipped_anchor28.png": "artifacts/overlays/model_skipped_anchor28.png",
 };
 const BOLTS = "data/raw/demo_bolts_v1_clean.mp4";
 const missing = [...Object.values(text), ...Object.values(binary), BOLTS].filter(
@@ -69,26 +72,22 @@ const duration = (file) =>
       "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file,
     ]).toString(),
   );
-const rows = (body) => body.split("\n").filter((line) => /^\| ?\d+ \|/.test(line));
-const slots = Object.fromEntries(
-  rows(readFileSync(join(root, "docs/DEMO_SCRIPT.md"), "utf8")).map((line) => {
-    const cells = line.split("|").map((cell) => cell.trim());
-    return [Number(cells[1]), Number(cells[3])];
-  }),
-);
 const manifest = Object.fromEntries(
-  rows(readFileSync(join(voice, "MANIFEST.md"), "utf8")).map((line) => {
-    const cells = line.split("|").map((cell) => cell.trim());
-    return [Number(cells[1]), Number(cells[3])];
-  }),
+  readFileSync(join(voice, "MANIFEST.md"), "utf8")
+    .split(/\r?\n/)
+    .filter((line) => /^\| ?\d+ \|/.test(line))
+    .map((line) => {
+      const cells = line.split("|").map((cell) => cell.trim());
+      return [Number(cells[1]), Number(cells[3])];
+    }),
 );
 const played = {};
-for (const beat of Object.keys(slots).map(Number)) {
+for (const beat of Object.keys(manifest).map(Number)) {
   const name = `beat-${String(beat).padStart(2, "0")}`;
   const source = join(voice, `${name}.mp3`);
   if (!existsSync(source)) fail(`Beat ${beat}: ${name}.mp3 is missing.`);
   const measured = duration(source);
-  if (!(beat in manifest) || Math.abs(measured - manifest[beat]) > 0.5) {
+  if (Math.abs(measured - manifest[beat]) > 0.5) {
     fail(`Beat ${beat}: ffprobe measures ${measured.toFixed(3)} s, MANIFEST.md says ${manifest[beat]} s.`);
   }
   const target = join(out, "voiceover", `${name}.wav`);
@@ -98,11 +97,6 @@ for (const beat of Object.keys(slots).map(Number)) {
     "-ar", "44100", "-ac", "1", target,
   ]);
   played[beat] = duration(target);
-  if (played[beat] > slots[beat]) {
-    fail(`Beat ${beat}: clip is ${played[beat].toFixed(3)} s, slot is ${slots[beat]} s.`);
-  }
-  console.log(
-    `beat ${beat}: mp3 ${measured.toFixed(3)} s (manifest ${manifest[beat]}), played ${played[beat].toFixed(3)} s, slot ${slots[beat]} s`,
-  );
+  console.log(`beat ${beat}: mp3 ${measured.toFixed(3)} s (manifest ${manifest[beat]}), played ${played[beat].toFixed(3)} s`);
 }
 writeFileSync(join(out, "audio.json"), JSON.stringify(played, null, 2));

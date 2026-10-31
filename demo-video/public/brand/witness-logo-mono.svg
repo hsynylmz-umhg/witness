@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>witness</title>
+  <!-- The geometry of witness-logo.svg in currentColor, with no gradient and no rim, for small sizes. -->
+  <g fill="none" stroke="currentColor" stroke-width="50.6" stroke-linecap="round">
+    <line class="rod" data-pen="1" x1="162.1" y1="184.8" x2="162.1" y2="834.0"/>
+    <line class="rod" data-pen="3" x1="522.0" y1="184.8" x2="522.0" y2="834.0"/>
+    <line class="rod" data-pen="2" x1="162.1" y1="834.0" x2="537.6" y2="184.8"/>
+    <line class="rod" data-pen="4" x1="511.6" y1="834.0" x2="882.7" y2="184.8"/>
+  </g>
+  <g fill="currentColor">
+    <circle class="joint" data-pen="0" cx="162.7" cy="185.4" r="63.7"/>
+    <circle class="joint" data-pen="2" cx="526.4" cy="184.1" r="63.7"/>
+    <circle class="joint" data-pen="4" cx="866.0" cy="184.9" r="63.7"/>
+    <circle class="joint" data-pen="1" cx="163.6" cy="833.4" r="69.3"/>
+    <circle class="joint" data-pen="3" cx="521.3" cy="834.6" r="69.3"/>
+  </g>
+</svg>

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>witness</title>
+  <!--
+    Traced in round 18 from the operator's raster reference, measured pixel by pixel: four rods and
+    five joints. Rod width 50.6 (6.1% of the mark's 835-unit width). Upper joints r 63.7, lower
+    joints r 69.3: 2.5x and 2.7x the rod half-width. The gradient runs from the reference's deep navy
+    at the base to its azure at the crown. One specular pass: a narrow #3B80DE rim on the left edge
+    of each rod and joint. Rods and joints are listed in depth order; data-pen is the order in which
+    the film draws them.
+  -->
+  <defs>
+    <linearGradient id="witness-ramp" gradientUnits="userSpaceOnUse" x1="512" y1="903.8" x2="512" y2="120.3">
+      <stop offset="0" stop-color="#01112F"/>
+      <stop offset="1" stop-color="#194C9E"/>
+    </linearGradient>
+  </defs>
+  <g fill="none">
+    <line class="rod" data-pen="1" x1="162.1" y1="184.8" x2="162.1" y2="834.0" stroke="url(#witness-ramp)" stroke-width="50.6" stroke-linecap="round"/>
+    <line class="rim" data-pen="1" x1="139.8" y1="184.8" x2="139.8" y2="834.0" stroke="#3B80DE" stroke-width="6"/>
+    <line class="rod" data-pen="3" x1="522.0" y1="184.8" x2="522.0" y2="834.0" stroke="url(#witness-ramp)" stroke-width="50.6" stroke-linecap="round"/>
+    <line class="rim" data-pen="3" x1="499.7" y1="184.8" x2="499.7" y2="834.0" stroke="#3B80DE" stroke-width="6"/>
+    <line class="rod" data-pen="2" x1="162.1" y1="834.0" x2="537.6" y2="184.8" stroke="url(#witness-ramp)" stroke-width="50.6" stroke-linecap="round"/>
+    <line class="rim" data-pen="2" x1="142.8" y1="822.8" x2="518.2" y2="173.6" stroke="#3B80DE" stroke-width="6"/>
+    <line class="rod" data-pen="4" x1="511.6" y1="834.0" x2="882.7" y2="184.8" stroke="url(#witness-ramp)" stroke-width="50.6" stroke-linecap="round"/>
+    <line class="rim" data-pen="4" x1="492.2" y1="822.9" x2="863.3" y2="173.7" stroke="#3B80DE" stroke-width="6"/>
+  </g>
+  <g fill="url(#witness-ramp)">
+    <circle class="joint" data-pen="0" cx="162.7" cy="185.4" r="63.7"/>
+    <circle class="joint" data-pen="2" cx="526.4" cy="184.1" r="63.7"/>
+    <circle class="joint" data-pen="4" cx="866.0" cy="184.9" r="63.7"/>
+    <circle class="joint" data-pen="1" cx="163.6" cy="833.4" r="69.3"/>
+    <circle class="joint" data-pen="3" cx="521.3" cy="834.6" r="69.3"/>
+  </g>
+  <g fill="none" stroke="#3B80DE" stroke-width="6">
+    <path class="rim" data-pen="0" d="M 162.7 246.1 A 60.7 60.7 0 0 1 162.7 124.7"/>
+    <path class="rim" data-pen="2" d="M 526.4 244.8 A 60.7 60.7 0 0 1 526.4 123.4"/>
+    <path class="rim" data-pen="4" d="M 866.0 245.6 A 60.7 60.7 0 0 1 866.0 124.2"/>
+    <path class="rim" data-pen="1" d="M 163.6 899.7 A 66.3 66.3 0 0 1 163.6 767.1"/>
+    <path class="rim" data-pen="3" d="M 521.3 900.9 A 66.3 66.3 0 0 1 521.3 768.3"/>
+  </g>
+</svg>

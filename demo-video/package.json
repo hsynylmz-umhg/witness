@@ -27,7 +27,8 @@
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc",
-    "render": "node sync-assets.mjs && remotion render WitnessDemo out/witness_demo_v4.mp4"
+    "render": "node sync-assets.mjs && remotion render WitnessDemo out/witness_demo_final.mp4",
+    "script-doc": "node script-doc.mjs"
   },
   "allowScripts": {
     "esbuild": false

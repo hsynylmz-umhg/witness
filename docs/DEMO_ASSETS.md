@@ -1,34 +1,45 @@
 # Demo assets
 
-Raw material for the three-minute video, not the video itself. Every path below exists on the
-operator machine as of round 11, unless it is marked `MISSING`. `artifacts/` and `data/raw/` are
-git-ignored, so those files are local only and are never committed. The claim the video may make
-is set by D030 and D031: verification of an event log, with the perception extractor shown as a
-measured demonstration, misses included. The `_02` assets come from rule v2 (tag `r7`).
-The round-8 `_03` reports were built over an absent event log after rule v3 refused both clips;
-they were deleted in round 9 and `build` now refuses a session without `events.json`.
+The film and every file it is made from, as of round 18. `artifacts/`, `data/raw/`, `demo-video/out/`
+and `demo-video/public/witness/` are git-ignored: those files exist on the operator machine only and
+are never committed. The film is authored in `demo-video/src/beats.ts`, and `docs/DEMO_SCRIPT.md` is
+generated from it by `npm run script-doc`. The claim the film may make is set by D030 and D031.
 
-## The submission film (round 17)
+## The submission film
 
-`demo-video/out/witness_demo_final.mp4` **is** the submission file: 180.000 s, 5400 frames,
-1920x1080 h264 with AAC audio. It is not retimed or re-encoded after rendering. Beat 4's slot is
-21.40 s and beat 7's 23.60 s, so every narration clip ends at least 2.0 s before its cut
-(`demo-video/public/voiceover/MANIFEST.md`). `witness_demo_v2.mp4` to `witness_demo_v4.mp4` are
-superseded intermediates; the 181.60 s of `v4` is not a figure for the submitted film.
+`demo-video/out/witness_demo_final.mp4` is the submission file: 180.000 s, 5400 frames, 1920x1080 h264
+with AAC audio (180.011 s), rendered by `npm run render` in round 18. The round-17 cut is kept beside it
+as `witness_demo_r17.mp4`, the fallback. `witness_demo_v1.mp4` to `witness_demo_v3.mp4` are superseded
+intermediates; the 181.60 s round-16 cut was deleted in round 18.
 
-| Asset | Path | What it shows |
+## Beat by beat
+
+| Beat | On screen | Source |
 |---|---|---|
-| Bolt B-roll (intended use case) | `data/raw/demo_bolts_v1_clean.mp4`, source 0-8 s; `data/raw/demo_bolts_v2_skipped.mp4` is filed but not in the film | Beat 1 of `witness_demo_final.mp4`: a driver turning screw 1 of a numbered row, no clip audio, with "intended use case — not a measurement" burned in for the whole segment. Intended use case, not a measurement: no procedure, extraction or findings exist for these clips |
-| Voiceover | `demo-video/public/voiceover/beat-01.mp3` to `beat-08.mp3`, `MANIFEST.md` | One clip per beat, loudness-normalised at render time (loudnorm, -16 LUFS integrated) with 100 ms fades; each starts at its beat's first frame |
-| Source clips | `data/raw/real_panel_v1_clean.mp4`, `data/raw/real_panel_v1_skipped.mp4` | The permitted mock panel being marked, one clean run and one with a skip and a swap |
-| Answer key | `docs/REAL_MEDIA.md` (sections up to "Measured files") | The expected outcome, committed before any measurement |
-| Sheet detected, boxes labelled | `artifacts/overlays/real_clean_02_frame-7224.png` | Last frame (original frame index 7224) of session `34630bce-f60f-42ac-aedf-f01fd9cdb064`, drawn by `scripts/overlay_still.py`: sheet bounds in blue, the ten box windows located in frame 0, green for the nine marked and red for BOX_09, matching the clean report. The windows sit offset from the boxes because the sheet drifted after frame 0 (round 8) |
-| A confirmed mark | `artifacts/real_clean_02/evidence/evidence-1.png` | BOX_01 hatched, about 3 s after its 5.6 s onset |
-| A failure, on camera | `artifacts/real_skipped_02/evidence/evidence-10.png` | Boxes 6, 9 and 10 still blank after events were already claimed for 9 and 10 |
-| Report, clean clip | `artifacts/real_clean_02/report.html` | One `skipped` finding (BOX_09), evidence stills, record and report hashes |
-| Report, skipped clip | `artifacts/real_skipped_02/report.html` | Three order findings, BOX_03 correct and BOX_06/BOX_09 spurious |
-| Hash chain | `artifacts/real_clean_02/manifest.json`, `artifacts/real_clean_02/manifest.sha256` | The hashes a viewer can recompute from the output bytes |
-| Risk-gate table | `docs/RISK_GATE.md` | 25 SYNTHETIC cases, TP/FP/FN and the labelling audit |
-| Real versus key, side by side | `docs/REAL_MEDIA.md` ("Round 7 measurement") | Expected, found, onset times and why each miss happened |
-| Round comparison | `artifacts/real_clean_01/report.html` | The round-6 brightness rule on the same clip, for a before/after shot |
-| A loud refusal | `docs/REAL_MEDIA.md` ("Round 8 measurement") | Rule v3 stopping at frame 1558 / 1733 instead of placing masks on an ambiguous registration, with the drift profile |
+| 1 | The small mono mark and the question, set alone; the bolt B-roll for its 8 s, captioned "intended use case — not a measurement" | `demo-video/public/brand/witness-logo-mono.svg`; `data/raw/demo_bolts_v1_clean.mp4`, source 0–8 s, no audio |
+| 2 | The skipped clip's event log as ten procedure parts filling in the order they were seen, its first evidence still, the three checks and the report's two findings | `artifacts/sessions/58bb85e4-77eb-4297-882a-aac467a05bca/events.json` and its `evidence/evidence-1.png`; `artifacts/real_skipped_05/findings.json`; `data/procedures/panel_boxes_v1.json` |
+| 3 | The hash chain as three points and two drawn links with the full values, the recompute rule, and the limit: local hashes, no trust anchor | `artifacts/real_skipped_05/manifest.json`, `artifacts/real_skipped_05/manifest.sha256` |
+| 4 | 25, 10, 1 and 3 on a baseline with the caveat that all 25 cases are synthetic | `docs/RISK_GATE.md` |
+| 5 | The geometry-only run as stated figures, clean and skipped side by side; no picture and no model output | `docs/REAL_MEDIA.md` (Round 7 measurement) |
+| 6 | A threshold drawn at 2.0, two bars stopping at 1.97 and 1.93, the frames where extraction stopped | `docs/REAL_MEDIA.md` (Round 8 measurement) |
+| 7 | The model overlays of both clips at one crop; sam-3.1, 78 anchors at one call each, USD 0.1950; the calibration limit, which stays to the end | `artifacts/overlays/model_clean_anchor48.png`, `artifacts/overlays/model_skipped_anchor28.png`; `docs/REAL_MEDIA.md` (Model-produced events); `docs/STATUS.md` |
+| 8 | The claim, one slow drawn rule, the full gradient mark | `demo-video/public/brand/witness-logo.svg` |
+
+Each beat's narration is `demo-video/public/voiceover/beat-NN.mp3`, measured in `MANIFEST.md`. The
+render plays a loudness-normalised copy (loudnorm, -16 LUFS, 100 ms fades) and never edits a clip.
+
+## How the files reach the film
+
+`demo-video/sync-assets.mjs` copies the files above into `demo-video/public/witness/`, masking the
+repository and home paths in every text copy, cuts the bolt excerpt and measures each voiceover clip
+against `MANIFEST.md`. Before a frame renders, the composition refuses a drawn string that contains a
+user path, a clip longer than its slot, subtitles that are not the narration word for word, slots that
+do not fill 5400 frames, and a mark whose gradient is not the film's ramp.
+
+## The mark
+
+`demo-video/public/brand/witness-logo.svg` and `witness-logo-mono.svg` are hand-written vectors, traced
+in round 18 from the operator's raster reference, which is not in the repository: four rods and five
+joints, rod width 6.1% of the mark's width, joints 2.5 to 2.7 times the rod half-width with the lower
+pair larger, a gradient from #01112F at the base to #194C9E at the crown, and a #3B80DE rim. The film
+draws the mark from these files.
