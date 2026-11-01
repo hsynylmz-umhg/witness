@@ -62,3 +62,6 @@ skills/
 
 # private inventory, kept on disk only
 docs/inventory/context-kit.txt
+
+# narration clips, kept on disk only
+demo-video/public/voiceover/*.mp3

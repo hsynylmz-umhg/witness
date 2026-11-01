@@ -16,7 +16,7 @@ Generated 2026-10-28, corrected 2026-10-28 after measuring with ffprobe. Eight c
 
 **Total audio 137.59 s in a 152.17 s cut**, leaving 14.57 s of silence. Of that, 6.04 s is the two
 designed pressure points, beat 4's hold and beat 6's freeze; the other 8.53 s is a breath of about
-1.4 s after each of the six other clips. No beat is over its slot and no word is shortened.
+1.4 s after each of the six other clips. No beat is over its slot and no word is shortened. The clips are not shipped; these are the measured durations the slots derive from.
 
 Since round 20 the slots are derived in `demo-video/src/beats.ts`: each is its clip plus a 1.400 s
 breath, rounded up to a frame, except beat 4's hold (3.600 s) and beat 6's freeze (2.400 s). The

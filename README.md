@@ -54,6 +54,10 @@ and synthetic (the ffmpeg-marked tests also need FFmpeg on `PATH`); it cannot ru
 the real clips, and it cannot re-render the demo film, which needs those clips and the local report
 folders under `artifacts/`.
 
+The film's media is not shipped: the bolt footage, evidence stills and model overlays live in the
+ignored `demo-video/public/witness/`, and the narration is not tracked, so a fresh clone cannot
+reproduce the film. The finished film is the artifact.
+
 ## Repo map
 
 - `.claude/`: local development tooling; nothing under it ships (credits in `docs/CREDITS.md`)
