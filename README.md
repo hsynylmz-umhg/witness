@@ -2,6 +2,10 @@
 
 Licensed under the Apache License, Version 2.0 — see LICENSE.
 
+[![Witness demo](docs/img/demo-thumb.png)](https://youtu.be/9k-IgV-YyQs)
+
+https://youtu.be/9k-IgV-YyQs
+
 ## What this is
 
 WITNESS reads an event log of what happened during a fixed-camera assembly procedure and turns
