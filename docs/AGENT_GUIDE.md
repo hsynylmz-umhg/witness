@@ -4,8 +4,9 @@ Working guide for any coding agent in this repo. `docs/RULES.md` is the authorit
 source; this file restates six of those rules and adds the commands and the tool map. If the
 two disagree, `docs/RULES.md` wins.
 
-witness is an offline-first video-integrity auditor. Given a clip, it decides which frames are
-*clipped* or *blanked* to hide something, and emits an evidence report whose hash chain can be
+witness audits a fixed-camera assembly procedure from its event log. Given a clip and a
+procedure, it reports skipped steps, out-of-order steps and undocumented parts, and each
+finding carries an evidence id or does not exist — the report's hash chain can be
 recomputed from the output bytes. Solo hackathon entry, indie track. Judges are engineers and
 VCs; the scoring criteria carry equal weight.
 
@@ -119,7 +120,9 @@ Codec contract: `data = H, W, marker, payload`. There is no fallback decoder, an
 one would be a decision, not a fix.
 
 Budget: `WITNESS_MAX_SPEND_USD` is the only key that unlocks `--allow-paid`. Unset means
-exit code 2. The approved ceiling is USD 1.00; it stays unspent until credits exist.
+exit code 2. The approved cap is USD 5.00 (`config/spike.toml` carries `max_usd` and
+`credits_confirmed`). `docs/STATUS.md` records the spend: 6 spike calls (USD 0.0150) and 78
+model-event calls (USD 0.1950), a ledger total of USD 0.2100 of the USD 5.00 cap.
 
 ---
 
